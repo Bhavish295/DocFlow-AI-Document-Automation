@@ -1,0 +1,75 @@
+.processing-status {
+  margin-top: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #d7dde5;
+  background: #f7f9fc;
+  font-size: 0.82rem;
+  color: #243247;
+}
+
+.processing-status--failed {
+  border-color: #e3b6b6;
+  background: #fff7f7;
+}
+
+.processing-status--completed {
+  border-color: #b9d6c3;
+  background: #f3faf5;
+}
+
+.processing-status__headline {
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+}
+
+.processing-status__reason {
+  margin: 0 0 0.45rem;
+  color: #7a2e2e;
+}
+
+.processing-status__stages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.processing-status__stages li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.processing-status__marker {
+  width: 1rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+.processing-status__bar {
+  margin-top: 0.45rem;
+  height: 0.35rem;
+  background: #dfe5ee;
+  overflow: hidden;
+}
+
+.processing-status__bar-fill {
+  height: 100%;
+  background: #3d6ea8;
+  transition: width 0.25s ease;
+}
+
+.processing-status__retry {
+  border: 1px solid #b44;
+  background: #fff;
+  color: #8a2a2a;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.processing-status__retry:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

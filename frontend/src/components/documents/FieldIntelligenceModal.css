@@ -1,0 +1,212 @@
+.field-intel {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(19, 32, 25, 0.48);
+}
+
+.field-intel__panel {
+  width: min(860px, 100%);
+  max-height: min(860px, 92vh);
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(250, 252, 248, 0.98), rgba(238, 244, 239, 0.96));
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.field-intel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.2rem 0.85rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.field-intel__eyebrow {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.25rem;
+}
+
+.field-intel__title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.field-intel__close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-elevated);
+  color: var(--ink);
+  font-size: 1.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.field-intel__body {
+  padding: 1rem 1.2rem 1.25rem;
+  overflow: auto;
+}
+
+.field-intel__summary {
+  margin: 0 0 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.field-intel__summary div {
+  padding: 0.75rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(247, 250, 246, 0.9);
+}
+
+.field-intel__summary dt {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.field-intel__summary dd {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-transform: capitalize;
+}
+
+.field-intel__issues {
+  margin: 0 0 0.9rem;
+  color: #6b4a1b;
+  font-size: 0.9rem;
+}
+
+.field-intel__table-wrap {
+  overflow-x: auto;
+}
+
+.field-intel__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.field-intel__table th,
+.field-intel__table td {
+  text-align: left;
+  padding: 0.65rem 0.55rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.field-intel__table th {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.field-intel__status {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: rgba(47, 93, 66, 0.12);
+  color: #24543a;
+}
+
+.field-intel__status--missing,
+.field-intel__status--suspicious {
+  background: rgba(176, 122, 42, 0.16);
+  color: #6b4a1b;
+}
+
+.field-intel__status--invalid {
+  background: rgba(122, 46, 27, 0.14);
+  color: #7a2e1b;
+}
+
+.field-intel__state {
+  margin: 0;
+  padding: 1.5rem 0.5rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.field-intel__state--error {
+  color: #7a2e1b;
+}
+
+@media (max-width: 720px) {
+  .field-intel {
+    padding: 0.5rem;
+    place-items: end center;
+  }
+
+  .field-intel__panel {
+    max-height: 94vh;
+    border-radius: 14px 14px 10px 10px;
+  }
+
+  .field-intel__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .field-intel__title {
+    font-size: 1.15rem;
+  }
+
+  .field-intel__table thead {
+    display: none;
+  }
+
+  .field-intel__table,
+  .field-intel__table tbody,
+  .field-intel__table tr,
+  .field-intel__table td {
+    display: block;
+    width: 100%;
+  }
+
+  .field-intel__table tr {
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .field-intel__table td {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .field-intel__table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+}

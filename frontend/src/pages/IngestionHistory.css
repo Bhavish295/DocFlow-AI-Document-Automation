@@ -1,0 +1,120 @@
+.ingestion-history {
+  display: grid;
+  gap: 1rem;
+}
+
+.ingestion-history__header h2 {
+  margin: 0 0 0.25rem;
+}
+
+.ingestion-history__header p {
+  margin: 0;
+  color: #5b6b7c;
+}
+
+.ingestion-history__email {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #d7dee7;
+  background: #f7f9fb;
+}
+
+.ingestion-history__email-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.ingestion-history__email-grid strong {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #5b6b7c;
+  margin-bottom: 0.2rem;
+}
+
+.ingestion-history__email button {
+  justify-self: start;
+  font: inherit;
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+}
+
+.ingestion-history__email-msg {
+  margin: 0;
+  color: #345;
+  font-size: 0.9rem;
+}
+
+.ingestion-history__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ingestion-history__filters label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.ingestion-history__filters select {
+  font: inherit;
+  padding: 0.4rem 0.55rem;
+}
+
+.ingestion-history__error {
+  padding: 0.6rem 0.75rem;
+  background: #fff1f1;
+  border: 1px solid #e7b6b6;
+  color: #7a2e2e;
+}
+
+.ingestion-history__table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.ingestion-history__table th,
+.ingestion-history__table td {
+  border-bottom: 1px solid #e3e8ef;
+  text-align: left;
+  padding: 0.55rem 0.4rem;
+  font-size: 0.9rem;
+  vertical-align: top;
+}
+
+.ingestion-history__err {
+  color: #7a2e2e;
+}
+
+.ingestion-history__status {
+  text-transform: capitalize;
+}
+
+.ingestion-history__status--completed {
+  color: #245536;
+}
+
+.ingestion-history__status--failed {
+  color: #7a2e2e;
+}
+
+.ingestion-history__status--skipped {
+  color: #6a5a20;
+}
+
+.ingestion-history__pager {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ingestion-history__pager button {
+  font: inherit;
+  padding: 0.35rem 0.7rem;
+}

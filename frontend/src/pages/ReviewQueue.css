@@ -1,0 +1,206 @@
+.review-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  max-width: 1100px;
+}
+
+.review-queue__kicker {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.45rem;
+}
+
+.review-queue__title {
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 2.2vw, 2.2rem);
+  font-weight: 600;
+}
+
+.review-queue__desc {
+  margin-top: 0.55rem;
+  max-width: 58ch;
+  color: var(--text-muted);
+}
+
+.review-queue__filters,
+.review-queue__list {
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 2px);
+  background: var(--surface);
+  padding: 1rem 1.1rem;
+}
+
+.review-queue__filters-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.review-queue__filters-form label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.review-queue__filters-form select,
+.review-queue__filters-actions button,
+.review-queue__actions button,
+.review-queue__pagination button {
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  border-radius: 9px;
+  padding: 0.6rem 0.75rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.review-queue__alert {
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+}
+
+.review-queue__alert--error {
+  background: #fdeeee;
+  color: #9b2c2c;
+}
+
+.review-queue__alert--success {
+  background: #e8f6ec;
+  color: #1f6a3a;
+}
+
+.review-queue__list-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.review-queue__list-header p,
+.review-queue__state {
+  color: var(--text-muted);
+}
+
+.review-queue__table-wrap {
+  overflow-x: auto;
+}
+
+.review-queue__table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+
+.review-queue__table-wrap th,
+.review-queue__table-wrap td {
+  text-align: left;
+  padding: 0.75rem 0.55rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.review-queue__table-wrap th {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.review-queue__doc {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.review-queue__doc span {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.review-queue__status,
+.review-queue__priority {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+
+.review-queue__status--pending { background: #fff4df; color: #8a5a00; }
+.review-queue__status--in_review { background: #e7f0ff; color: #2457a6; }
+.review-queue__status--approved { background: #e8f6ec; color: #1f6a3a; }
+.review-queue__status--rejected { background: #fdeeee; color: #9b2c2c; }
+
+.review-queue__priority--high { background: #fdeeee; color: #9b2c2c; }
+.review-queue__priority--medium { background: #fff4df; color: #8a5a00; }
+.review-queue__priority--low { background: #eef2f0; color: #44554c; }
+
+.review-queue__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.review-queue__cards {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0.85rem;
+}
+
+.review-queue__cards li {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.review-queue__card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.review-queue__card-top p {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.review-queue__pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--line);
+}
+
+.review-queue__pagination button:disabled,
+.review-queue__actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .review-queue__filters-form {
+    grid-template-columns: 1fr;
+  }
+
+  .review-queue__table-wrap {
+    display: none;
+  }
+
+  .review-queue__cards {
+    display: grid;
+  }
+}

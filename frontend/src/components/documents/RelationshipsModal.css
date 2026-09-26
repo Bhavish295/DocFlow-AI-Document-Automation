@@ -1,0 +1,169 @@
+.relationships-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(18, 28, 22, 0.42);
+}
+
+.relationships-modal__panel {
+  width: min(760px, 100%);
+  max-height: min(90vh, 900px);
+  overflow: auto;
+  border-radius: calc(var(--radius) + 2px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 50px rgba(20, 35, 28, 0.18);
+}
+
+.relationships-modal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem 0.85rem;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+
+.relationships-modal__eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+.relationships-modal__header h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+}
+
+.relationships-modal__close {
+  border: 0;
+  background: transparent;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.relationships-modal__body {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.15rem 1.25rem 1.35rem;
+}
+
+.relationships-modal__body h3 {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+}
+
+.relationships-modal__note {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.relationships-modal__state {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.relationships-modal__state--error {
+  color: #9b2c2c;
+}
+
+.relationships-modal__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.relationships-modal__item {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem;
+  display: grid;
+  gap: 0.75rem;
+  background: color-mix(in srgb, var(--surface) 92%, var(--accent) 8%);
+}
+
+.relationships-modal__item--suggested {
+  background: color-mix(in srgb, var(--surface) 94%, #c4a35a 6%);
+}
+
+.relationships-modal__item-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.relationships-modal__filename {
+  margin: 0;
+  font-weight: 600;
+}
+
+.relationships-modal__type {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.relationships-modal__status {
+  align-self: start;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.relationships-modal__status--suggested {
+  color: #8a6a20;
+}
+
+.relationships-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem 1rem;
+  margin: 0;
+}
+
+.relationships-modal__grid dt {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.relationships-modal__grid dd {
+  margin: 0.15rem 0 0;
+}
+
+.relationships-modal__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.relationships-modal__confirm,
+.relationships-modal__danger {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: calc(var(--radius) - 2px);
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.relationships-modal__confirm {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+}
+
+.relationships-modal__danger {
+  color: #9b2c2c;
+}

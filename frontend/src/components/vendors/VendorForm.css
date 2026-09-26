@@ -1,0 +1,119 @@
+.vendor-form {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(18, 28, 22, 0.42);
+}
+
+.vendor-form__panel {
+  width: min(520px, 100%);
+  max-height: min(90vh, 760px);
+  overflow: auto;
+  border-radius: calc(var(--radius) + 2px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 50px rgba(20, 35, 28, 0.18);
+}
+
+.vendor-form__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem 0.85rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.vendor-form__eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+.vendor-form__header h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.vendor-form__close {
+  border: 0;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.vendor-form__body {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.15rem 1.25rem 1.25rem;
+}
+
+.vendor-form__body label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.vendor-form__body input,
+.vendor-form__body textarea {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  padding: 0.65rem 0.75rem;
+  background: #fff;
+  font: inherit;
+  color: var(--ink);
+}
+
+.vendor-form__body textarea {
+  resize: vertical;
+}
+
+.vendor-form__error {
+  color: #9b2c2c;
+  font-size: 0.9rem;
+}
+
+.vendor-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 0.35rem;
+}
+
+.vendor-form__primary,
+.vendor-form__secondary {
+  border: 0;
+  border-radius: 9px;
+  padding: 0.65rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vendor-form__primary {
+  background: var(--accent);
+  color: #f7fbf8;
+}
+
+.vendor-form__secondary {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+}
+
+.vendor-form__primary:disabled,
+.vendor-form__secondary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}

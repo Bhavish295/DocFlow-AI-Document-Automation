@@ -1,0 +1,215 @@
+.review-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(18, 28, 22, 0.42);
+}
+
+.review-modal__panel {
+  width: min(820px, 100%);
+  max-height: min(90vh, 900px);
+  overflow: auto;
+  border-radius: calc(var(--radius) + 2px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 50px rgba(20, 35, 28, 0.18);
+}
+
+.review-modal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem 0.85rem;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+
+.review-modal__eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+.review-modal__header h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+}
+
+.review-modal__close {
+  border: 0;
+  background: transparent;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.review-modal__body {
+  display: grid;
+  gap: 1.15rem;
+  padding: 1.15rem 1.25rem 1.35rem;
+}
+
+.review-modal__body h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.95rem;
+}
+
+.review-modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem 1rem;
+}
+
+.review-modal__grid dt {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.review-modal__grid dd {
+  font-weight: 600;
+}
+
+.review-modal__wide {
+  grid-column: 1 / -1;
+}
+
+.review-modal__body textarea {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  resize: vertical;
+}
+
+.review-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.review-modal__actions button {
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  border-radius: 9px;
+  padding: 0.55rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.review-modal__approve {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #f7fbf8 !important;
+}
+
+.review-modal__reject {
+  color: #9b2c2c !important;
+}
+
+.review-modal__state {
+  color: var(--text-muted);
+}
+
+.review-modal__state--error {
+  color: #9b2c2c;
+}
+
+.review-modal__explanation {
+  margin: 0.35rem 0 0;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.review-modal__hint {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.review-modal__hint--error {
+  color: #9b2c2c;
+}
+
+.review-modal__issue-list p {
+  margin: 0.85rem 0 0.35rem;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.review-modal__issue-list ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.review-modal__fields {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.85rem;
+}
+
+.review-modal__field {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+}
+
+.review-modal__field h4 {
+  margin: 0 0 0.45rem;
+  font-size: 0.92rem;
+}
+
+.review-modal__field dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem 0.8rem;
+  margin: 0;
+}
+
+.review-modal__field dt {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.review-modal__field dd {
+  margin: 0.15rem 0 0;
+  font-weight: 600;
+}
+
+.review-modal__badge {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.review-modal__badge--valid {
+  background: #e8f6ec;
+  color: #1f6a3a;
+}
+
+.review-modal__badge--missing,
+.review-modal__badge--suspicious {
+  background: #fff4df;
+  color: #8a5a00;
+}
+
+.review-modal__badge--invalid {
+  background: #fdeeee;
+  color: #9b2c2c;
+}
+
+@media (max-width: 640px) {
+  .review-modal__grid,
+  .review-modal__field dl {
+    grid-template-columns: 1fr;
+  }
+}

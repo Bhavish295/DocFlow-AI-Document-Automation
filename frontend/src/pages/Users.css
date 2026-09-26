@@ -1,0 +1,67 @@
+.users-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.users-page__header h2 {
+  margin: 0 0 0.25rem;
+}
+
+.users-page__header p {
+  margin: 0;
+  color: #5b6b7c;
+}
+
+.users-page__banner {
+  padding: 0.65rem 0.8rem;
+  border: 1px solid;
+}
+
+.users-page__banner--error {
+  background: #fff1f1;
+  border-color: #e7b6b6;
+  color: #7a2e2e;
+}
+
+.users-page__banner--ok {
+  background: #f1faf3;
+  border-color: #b7d8c0;
+  color: #245536;
+}
+
+.users-page__form {
+  display: grid;
+  gap: 0.7rem;
+  max-width: 28rem;
+  padding: 1rem;
+  border: 1px solid #d5dde7;
+  background: #fff;
+}
+
+.users-page__form label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.users-page__form input,
+.users-page__form select,
+.users-page__form button,
+.users-page__list button {
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+}
+
+.users-page__list table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.users-page__list th,
+.users-page__list td {
+  border-bottom: 1px solid #e3e8ef;
+  text-align: left;
+  padding: 0.55rem 0.4rem;
+  font-size: 0.9rem;
+}

@@ -1,0 +1,104 @@
+.wf-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 28, 24, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 40;
+}
+
+.wf-modal {
+  width: min(560px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.wf-modal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+}
+
+.wf-modal__header h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.wf-modal__header button {
+  border: 0;
+  background: transparent;
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.wf-modal__desc {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.wf-modal__meta {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.wf-modal__meta div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 0.5rem;
+}
+
+.wf-modal__meta dt {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.wf-modal__meta dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.wf-modal__actions-list h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+}
+
+.wf-modal__actions-list ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.wf-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.wf-modal__primary,
+.wf-modal__secondary {
+  border-radius: 9px;
+  padding: 0.55rem 0.9rem;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.wf-modal__primary {
+  border: 0;
+  background: var(--accent);
+  color: #f7fbf8;
+}
+
+.wf-modal__secondary {
+  border: 1px solid var(--line-strong);
+  background: #fff;
+}

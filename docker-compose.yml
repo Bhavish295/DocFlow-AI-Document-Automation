@@ -1,0 +1,175 @@
+# Production-like local stack for DocFlow (Steps 25–27).
+# Copy .env.docker.example -> .env.docker and set secrets before starting.
+#
+# Architecture: frontend, backend, postgres, redis, worker, beat
+
+name: docflow
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-docflow}
+      POSTGRES_USER: ${POSTGRES_USER:-docflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-docflow_change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-docflow} -d ${POSTGRES_DB:-docflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - docflow
+    mem_limit: 512m
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - docflow
+    mem_limit: 256m
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-docflow}:${POSTGRES_PASSWORD:-docflow_change_me}@postgres:5432/${POSTGRES_DB:-docflow}
+      REDIS_URL: redis://redis:6379/0
+      PROCESSING_WORKER_MODE: celery
+      DOCUMENT_PROCESSING_SYNC: "false"
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      UPLOAD_DIR: storage/uploads
+    volumes:
+      - document_uploads:/app/storage/uploads
+      - anomaly_models:/app/storage/anomaly_models
+      - classification_models:/app/storage/models
+      - runtime_state:/app/storage/runtime
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/v1/health/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    networks:
+      - docflow
+    mem_limit: 3g
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+      SKIP_MIGRATIONS: "1"
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-docflow}:${POSTGRES_PASSWORD:-docflow_change_me}@postgres:5432/${POSTGRES_DB:-docflow}
+      REDIS_URL: redis://redis:6379/0
+      PROCESSING_WORKER_MODE: celery
+      DOCUMENT_PROCESSING_SYNC: "false"
+      UPLOAD_DIR: storage/uploads
+    volumes:
+      - document_uploads:/app/storage/uploads
+      - anomaly_models:/app/storage/anomaly_models
+      - classification_models:/app/storage/models
+      - runtime_state:/app/storage/runtime
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    command: ["celery", "-A", "app.workers.celery_app.celery_app", "worker", "--loglevel=info", "--concurrency=1"]
+    networks:
+      - docflow
+    mem_limit: 3g
+
+  beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+      SKIP_MIGRATIONS: "1"
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-docflow}:${POSTGRES_PASSWORD:-docflow_change_me}@postgres:5432/${POSTGRES_DB:-docflow}
+      REDIS_URL: redis://redis:6379/0
+      PROCESSING_WORKER_MODE: celery
+      DOCUMENT_PROCESSING_SYNC: "false"
+      UPLOAD_DIR: storage/uploads
+    volumes:
+      - runtime_state:/app/storage/runtime
+    depends_on:
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    command: ["celery", "-A", "app.workers.celery_app.celery_app", "beat", "--loglevel=info"]
+    networks:
+      - docflow
+    mem_limit: 256m
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - docflow
+    mem_limit: 128m
+
+volumes:
+  postgres_data:
+  document_uploads:
+  anomaly_models:
+  classification_models:
+  runtime_state:
+
+networks:
+  docflow:
+    driver: bridge

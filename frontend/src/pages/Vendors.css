@@ -1,0 +1,230 @@
+.vendors-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  max-width: 1100px;
+}
+
+.vendors-page__intro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.vendors-page__kicker {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.45rem;
+}
+
+.vendors-page__title {
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 2.2vw, 2.2rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.vendors-page__desc {
+  margin-top: 0.55rem;
+  max-width: 48ch;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.vendors-page__primary {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 9px;
+  padding: 0.7rem 1.15rem;
+  background: var(--accent);
+  color: #f7fbf8;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vendors-page__toolbar {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.vendors-page__search {
+  display: grid;
+  gap: 0.35rem;
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.vendors-page__search input {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  padding: 0.7rem 0.85rem;
+  background: #fff;
+  font: inherit;
+}
+
+.vendors-page__alert {
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  font-size: 0.92rem;
+}
+
+.vendors-page__alert--error {
+  background: #fdeeee;
+  color: #9b2c2c;
+}
+
+.vendors-page__alert--success {
+  background: #e8f6ec;
+  color: #1f6a3a;
+}
+
+.vendors-page__list,
+.vendors-page__list-header h3 {
+  margin: 0;
+}
+
+.vendors-page__list {
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 2px);
+  background: var(--surface);
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.vendors-page__list-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.vendors-page__list-header p,
+.vendors-page__state {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.vendors-page__state {
+  padding: 1.4rem 0.25rem;
+}
+
+.vendors-page__table-wrap {
+  overflow-x: auto;
+}
+
+.vendors-page__table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+
+.vendors-page__table th,
+.vendors-page__table td {
+  text-align: left;
+  padding: 0.75rem 0.55rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  font-size: 0.92rem;
+}
+
+.vendors-page__table th {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vendors-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.vendors-page__actions button {
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vendors-page__danger {
+  color: #9b2c2c !important;
+}
+
+.vendors-page__actions button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.vendors-page__cards {
+  display: none;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0.85rem;
+}
+
+.vendors-page__card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.vendors-page__card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.vendors-page__card-title {
+  font-weight: 650;
+}
+
+.vendors-page__card-meta,
+.vendors-page__card-date {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.vendors-page__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.vendors-page__meta dt {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.vendors-page__meta dd {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 860px) {
+  .vendors-page__intro {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .vendors-page__table-wrap {
+    display: none;
+  }
+
+  .vendors-page__cards {
+    display: grid;
+  }
+}

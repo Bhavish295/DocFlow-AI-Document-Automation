@@ -1,0 +1,117 @@
+.wf-exec-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 28, 24, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 45;
+}
+
+.wf-exec-modal {
+  width: min(720px, 100%);
+  max-height: min(90vh, 900px);
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.wf-exec-modal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.wf-exec-modal__header h3 {
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.wf-exec-modal__header button,
+.wf-exec-modal__footer button {
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  border-radius: 9px;
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.wf-exec-modal__header button {
+  border: 0;
+  background: transparent;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.wf-exec-modal__meta {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.wf-exec-modal__meta div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 0.5rem;
+}
+
+.wf-exec-modal__meta dt {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.wf-exec-modal__meta dd {
+  margin: 0;
+  word-break: break-word;
+}
+
+.wf-exec-modal__error {
+  background: #fdeeee;
+  color: #9b2c2c;
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+}
+
+.wf-exec-modal__steps h4 {
+  margin: 0 0 0.55rem;
+}
+
+.wf-exec-modal__steps ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.wf-exec-modal__steps li {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+}
+
+.wf-exec-modal__step-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.wf-exec-modal__steps pre {
+  margin: 0.45rem 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.78rem;
+  background: #f7faf8;
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+}
+
+.wf-exec-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+}
