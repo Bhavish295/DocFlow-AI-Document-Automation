@@ -79,8 +79,11 @@ class DocumentProcessingRunner:
         except JobCancelled:
             self.jobs.mark_cancelled(job)
         except AppError as exc:
+            self.db.rollback()
             self.jobs.fail(job, exc.message)
         except Exception as exc:  # noqa: BLE001 - job must never stay stuck running
+            # A broken transaction would make fail() raise too and leave the job "running".
+            self.db.rollback()
             self.jobs.fail(job, exc)
 
 

@@ -9,6 +9,7 @@ from typing import Any
 import uuid
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -45,6 +46,15 @@ class WorkflowEngine:
         self.db = db
 
     def ensure_predefined_workflows(self) -> list[Workflow]:
+        try:
+            return self._sync_predefined_workflows()
+        except IntegrityError:
+            # Another job/request seeded the same workflow codes concurrently
+            # (fresh database + parallel processing). Their rows are fine to use.
+            self.db.rollback()
+            return self._sync_predefined_workflows()
+
+    def _sync_predefined_workflows(self) -> list[Workflow]:
         workflows: list[Workflow] = []
         now = datetime.now(timezone.utc)
         for definition in PREDEFINED_WORKFLOWS:
@@ -612,3 +622,9 @@ def safe_dispatch_workflow_event(
             entity_type,
             entity_id,
         )
+        # Leave the session usable for the caller (e.g. the processing job must still be
+        # marked completed/failed); without this every later query raises PendingRollbackError.
+        try:
+            db.rollback()
+        except Exception:
+            logger.exception("Rollback after workflow dispatch failure also failed")

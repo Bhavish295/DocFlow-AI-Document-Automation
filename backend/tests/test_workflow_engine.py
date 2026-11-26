@@ -278,3 +278,52 @@ def test_failed_step_recorded(client, monkeypatch):
         assert any(step["status"] == "failed" for step in result["steps"])
     finally:
         db.close()
+
+
+def test_safe_dispatch_failure_leaves_session_usable(client, monkeypatch):
+    """A failing workflow must not poison the caller's session (jobs stuck 'running')."""
+    from sqlalchemy import select, text
+
+    from app.models.workflow import Workflow
+    from app.services.workflow_engine import safe_dispatch_workflow_event
+
+    db = client.testing_session_local()
+    try:
+        WorkflowEngine(db).ensure_predefined_workflows()
+        code = db.scalar(select(Workflow.code))
+
+        def broken_handle_event(self, **_kwargs):
+            # Duplicate unique code -> flush fails and the transaction needs a rollback.
+            self.db.add(Workflow(code=code, name="dup", description="dup", trigger_type="document_processed", status="active"))
+            self.db.flush()
+
+        monkeypatch.setattr(WorkflowEngine, "handle_event", broken_handle_event)
+        safe_dispatch_workflow_event(
+            db, trigger_event="document_processed", entity_type="document", entity_id=uuid.uuid4()
+        )
+        assert db.execute(text("SELECT 1")).scalar() == 1
+    finally:
+        db.close()
+
+
+def test_ensure_predefined_workflows_recovers_from_concurrent_seed(client, monkeypatch):
+    from sqlalchemy.exc import IntegrityError
+
+    db = client.testing_session_local()
+    try:
+        engine = WorkflowEngine(db)
+        original = WorkflowEngine._sync_predefined_workflows
+        calls = {"n": 0}
+
+        def flaky(self):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise IntegrityError("INSERT", {}, Exception("workflows_code_key"))
+            return original(self)
+
+        monkeypatch.setattr(WorkflowEngine, "_sync_predefined_workflows", flaky)
+        workflows = engine.ensure_predefined_workflows()
+        assert calls["n"] == 2
+        assert len(workflows) == len(PREDEFINED_WORKFLOWS)
+    finally:
+        db.close()

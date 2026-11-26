@@ -4,3 +4,4 @@
 *.jpg binary
 *.jpeg binary
 *.joblib binary
+*.webp binary

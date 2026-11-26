@@ -204,8 +204,8 @@ function Validation() {
       <section className="validation-page__create">
         <h3>3-Way Matching</h3>
         <p className="validation-page__hint">
-          Invoice ↔ Purchase Order ↔ Goods Receipt. Quantity line items are not fully modeled yet,
-          so quantity is reported as not evaluable.
+          Invoice ↔ Purchase Order ↔ Goods Receipt. Checks vendor, PO/GRN references, line-item
+          quantities, amounts, and confirmed document links.
         </p>
         <form className="validation-page__form validation-page__form--three-way" onSubmit={onThreeWayMatch}>
           <label>
