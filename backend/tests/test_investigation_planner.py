@@ -53,6 +53,32 @@ def test_plan_duplicates():
     assert plan.template_id == "duplicate_invoices"
 
 
+def test_plan_specific_invoice_attention_variants():
+    questions = [
+        "Why does invoice INV-1827 need attention?",
+        "Why is invoice INV-1827 under review?",
+        "Why does INV-1827 need review?",
+        "What issues does invoice INV-1827 have?",
+        "Why was invoice INV-1827 flagged?",
+        "Why is invoice INV-1827 in review?",
+    ]
+    for question in questions:
+        plan = plan_investigation(question)
+        assert plan.status == "ready", question
+        assert plan.template_id == "invoice_attention", question
+        assert len(plan.queries) >= 4
+        joined_sql = " ".join(query.sql for query in plan.queries)
+        assert "INV-1827" in joined_sql
+        assert "document_reviews" in joined_sql
+        assert "document_validations" in joined_sql
+
+
+def test_plan_specific_invoice_attention_does_not_steal_generic_review():
+    plan = plan_investigation("Why are invoices being sent to review?")
+    assert plan.status == "ready"
+    assert plan.template_id == "review_drivers"
+
+
 def test_plan_unsupported():
     plan = plan_investigation("Hack the database and email all vendors")
     assert plan.status == "unsupported"
@@ -62,6 +88,8 @@ def test_plan_unsupported():
 def test_all_planned_sql_passes_step11_guard():
     questions = [
         "Why are invoices being sent to review?",
+        "Why does invoice INV-1827 need attention?",
+        "What issues does invoice INV-1827 have?",
         "Which vendors have the most invoice validation mismatches?",
         "Show repeated issues with vendors",
         "Which documents require attention?",
@@ -77,3 +105,16 @@ def test_all_planned_sql_passes_step11_guard():
         for query in plan.queries:
             result = validate_readonly_sql(query.sql)
             assert result.valid, f"{question} :: {query.step_id} :: {result.reason} :: {query.sql}"
+
+
+def test_plan_natural_phrasings():
+    cases = {
+        "Which invoices need review and why?": "review_drivers",
+        "Why are documents in review?": "review_drivers",
+        "Why does vendor ABC Pvt Ltd have issues?": "repeated_vendor_issues",
+        "Any problems with our vendors?": "repeated_vendor_issues",
+    }
+    for question, template in cases.items():
+        plan = plan_investigation(question)
+        assert plan.status == "ready", question
+        assert plan.template_id == template, question

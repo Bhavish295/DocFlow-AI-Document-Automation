@@ -78,6 +78,8 @@ def analyze_investigation_results(
 
     if template_id == "review_drivers":
         findings.extend(_analyze_review_drivers(by_key))
+    elif template_id == "invoice_attention":
+        findings.extend(_analyze_invoice_attention(by_key))
     elif template_id == "vendor_mismatches":
         findings.extend(_analyze_vendor_mismatches(by_key))
     elif template_id == "repeated_vendor_issues":
@@ -116,6 +118,235 @@ def analyze_investigation_results(
         )
 
     return AnalysisResult(findings=findings, evidence=evidence)
+
+
+def _analyze_invoice_attention(by_key: dict[str, dict[str, Any]]) -> list[AnalysisFinding]:
+    findings: list[AnalysisFinding] = []
+    invoice_rows = (by_key.get("invoice_record") or {}).get("rows") or []
+    if not invoice_rows:
+        findings.append(
+            AnalysisFinding(
+                title="Invoice not found",
+                description=(
+                    "No invoice matching the requested invoice number was returned. "
+                    "It may not exist in the system, or the number may be mistyped."
+                ),
+                type="fact",
+            )
+        )
+        return findings
+
+    row = invoice_rows[0]
+    invoice_number = row.get("invoice_number")
+    findings.append(
+        AnalysisFinding(
+            title="Invoice located",
+            description=(
+                f"Invoice '{invoice_number}' was found "
+                f"(vendor={row.get('vendor_name')}, total={row.get('total_amount')} "
+                f"{row.get('currency')}, document_status={row.get('document_status')})."
+            ),
+            type="fact",
+        )
+    )
+
+    classification = row.get("classification_confidence")
+    if classification is not None:
+        findings.append(
+            AnalysisFinding(
+                title="Classification confidence",
+                description=f"Linked document classification_confidence is {classification}.",
+                type="fact",
+            )
+        )
+        if isinstance(classification, (int, float)) and classification < 0.7:
+            findings.append(
+                AnalysisFinding(
+                    title="Low classification confidence",
+                    description=(
+                        "Classification confidence is below 0.7, which commonly drives "
+                        "manual review / attention."
+                    ),
+                    type="observation",
+                )
+            )
+
+    extraction = row.get("extraction_confidence")
+    if extraction is not None:
+        findings.append(
+            AnalysisFinding(
+                title="Extraction confidence",
+                description=f"Invoice extraction_confidence is {extraction}.",
+                type="fact",
+            )
+        )
+        if isinstance(extraction, (int, float)) and extraction < 0.7:
+            findings.append(
+                AnalysisFinding(
+                    title="Low extraction confidence",
+                    description=(
+                        "Extraction confidence is below 0.7, which may explain why this "
+                        "invoice needs attention."
+                    ),
+                    type="observation",
+                )
+            )
+
+    review_rows = (by_key.get("invoice_reviews") or {}).get("rows") or []
+    if review_rows:
+        reasons = sorted(
+            {
+                str(item.get("reason"))
+                for item in review_rows
+                if item.get("reason") is not None
+            }
+        )
+        statuses = sorted(
+            {
+                str(item.get("status"))
+                for item in review_rows
+                if item.get("status") is not None
+            }
+        )
+        findings.append(
+            AnalysisFinding(
+                title="Review queue drivers",
+                description=(
+                    f"{len(review_rows)} review record(s) are linked to this invoice. "
+                    f"Reason(s): {', '.join(reasons) if reasons else 'unknown'}. "
+                    f"Status(es): {', '.join(statuses) if statuses else 'unknown'}."
+                ),
+                type="fact",
+            )
+        )
+        active = [
+            item
+            for item in review_rows
+            if str(item.get("status") or "").lower() in {"pending", "in_review"}
+        ]
+        if active:
+            findings.append(
+                AnalysisFinding(
+                    title="Needs attention",
+                    description=(
+                        f"Invoice '{invoice_number}' currently needs attention because "
+                        f"{len(active)} review item(s) are pending or in review "
+                        f"(reason(s): "
+                        + ", ".join(
+                            sorted(
+                                {
+                                    str(item.get("reason"))
+                                    for item in active
+                                    if item.get("reason") is not None
+                                }
+                            )
+                        )
+                        + ")."
+                    ),
+                    type="observation",
+                )
+            )
+    else:
+        findings.append(
+            AnalysisFinding(
+                title="No review records",
+                description="No document_reviews rows were returned for this invoice.",
+                type="fact",
+            )
+        )
+
+    validation_rows = (by_key.get("invoice_validations") or {}).get("rows") or []
+    if validation_rows:
+        mismatches = [
+            item
+            for item in validation_rows
+            if str(item.get("status") or "").lower() == "mismatch"
+        ]
+        findings.append(
+            AnalysisFinding(
+                title="Validation results",
+                description=(
+                    f"{len(validation_rows)} validation record(s) found; "
+                    f"{len(mismatches)} marked as mismatch."
+                ),
+                type="fact",
+            )
+        )
+        if mismatches:
+            failed_flags = []
+            sample = mismatches[0]
+            for flag in (
+                "vendor_match",
+                "currency_match",
+                "subtotal_match",
+                "tax_match",
+                "total_match",
+            ):
+                if flag in sample and sample.get(flag) is False:
+                    failed_flags.append(flag)
+            detail = (
+                f" Failed flags on latest mismatch include: {', '.join(failed_flags)}."
+                if failed_flags
+                else ""
+            )
+            findings.append(
+                AnalysisFinding(
+                    title="Validation issues",
+                    description=(
+                        f"Validation mismatch(es) exist for invoice '{invoice_number}'."
+                        + detail
+                    ),
+                    type="observation",
+                )
+            )
+    else:
+        findings.append(
+            AnalysisFinding(
+                title="No validation rows",
+                description="No validation records were returned for this invoice.",
+                type="fact",
+            )
+        )
+
+    missing_rows = (by_key.get("invoice_missing_fields") or {}).get("rows") or []
+    if missing_rows:
+        findings.append(
+            AnalysisFinding(
+                title="Missing fields",
+                description=(
+                    f"Invoice '{invoice_number}' is missing one or more key fields "
+                    "(invoice_number, total_amount, vendor_name, or currency)."
+                ),
+                type="fact",
+            )
+        )
+
+    dup_rows = (by_key.get("invoice_duplicate_check") or {}).get("rows") or []
+    if dup_rows:
+        count = dup_rows[0].get("occurrence_count")
+        if isinstance(count, (int, float)) and count > 1:
+            findings.append(
+                AnalysisFinding(
+                    title="Duplicate invoice indicator",
+                    description=(
+                        f"Invoice number '{invoice_number}' appears {count} times, "
+                        "which may indicate a duplicate or re-upload."
+                    ),
+                    type="observation",
+                )
+            )
+        elif count == 1:
+            findings.append(
+                AnalysisFinding(
+                    title="No duplicate number conflict",
+                    description=(
+                        f"Invoice number '{invoice_number}' appears once in the invoices table."
+                    ),
+                    type="fact",
+                )
+            )
+
+    return findings
 
 
 def _analyze_review_drivers(by_key: dict[str, dict[str, Any]]) -> list[AnalysisFinding]:

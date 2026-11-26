@@ -120,7 +120,7 @@ Local, deterministic classifier using scikit-learn:
 - Stratified train/test split (`test_size=0.25`, `random_state=42`) so evaluation is not run on training text
 - Holdout evaluation reports accuracy, macro precision/recall/F1, per-class metrics, and a confusion matrix
 - **Warning:** evaluation metrics are measured on this local synthetic holdout set only and are **not** production accuracy
-- Model artifact: `storage/models/document_classifier.joblib` (gitignored); version `1.2.0`
+- Model artifact: `storage/models/document_classifier.joblib` (gitignored); version `1.3.0`
 
 Train locally (no auth/RBAC in this project yet):
 

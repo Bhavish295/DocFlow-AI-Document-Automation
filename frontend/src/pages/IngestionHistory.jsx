@@ -171,44 +171,54 @@ export default function IngestionHistory() {
         <p>Loading…</p>
       ) : (
         <>
-          <table className="ingestion-history__table">
-            <thead>
-              <tr>
-                <th>Filename</th>
-                <th>Source</th>
-                <th>Status</th>
-                <th>Document</th>
-                <th>Job</th>
-                <th>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 && (
+          <div className="ingestion-history__table-wrap">
+            <table className="ingestion-history__table">
+              <thead>
                 <tr>
-                  <td colSpan={6}>No ingestion records yet.</td>
+                  <th>Filename</th>
+                  <th>Source</th>
+                  <th>Status</th>
+                  <th>Document</th>
+                  <th>Job</th>
+                  <th>Created</th>
                 </tr>
-              )}
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <div>{item.original_filename}</div>
-                    {item.error_message && (
-                      <small className="ingestion-history__err">{item.error_message}</small>
-                    )}
-                  </td>
-                  <td>{sourceLabel(item.source_type)}</td>
-                  <td>
-                    <span className={`ingestion-history__status ingestion-history__status--${item.status}`}>
-                      {item.status}
-                    </span>
-                  </td>
-                  <td>{item.document_id ? String(item.document_id).slice(0, 8) : '—'}</td>
-                  <td>{item.processing_job_id ? String(item.processing_job_id).slice(0, 8) : '—'}</td>
-                  <td>{formatDate(item.created_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.length === 0 && (
+                  <tr>
+                    <td colSpan={6}>No ingestion records yet.</td>
+                  </tr>
+                )}
+                {items.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <div className="ingestion-history__filename">{item.original_filename}</div>
+                      {item.error_message && (
+                        <small className="ingestion-history__err">{item.error_message}</small>
+                      )}
+                    </td>
+                    <td>{sourceLabel(item.source_type)}</td>
+                    <td>
+                      <span className={`ingestion-history__status ingestion-history__status--${item.status}`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td>
+                      <code className="ingestion-history__code">
+                        {item.document_id ? String(item.document_id).slice(0, 8) : '—'}
+                      </code>
+                    </td>
+                    <td>
+                      <code className="ingestion-history__code">
+                        {item.processing_job_id ? String(item.processing_job_id).slice(0, 8) : '—'}
+                      </code>
+                    </td>
+                    <td>{formatDate(item.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <div className="ingestion-history__pager">
             <button type="button" disabled={page <= 1 || loading} onClick={() => setPage((p) => p - 1)}>

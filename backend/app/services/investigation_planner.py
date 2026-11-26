@@ -28,6 +28,7 @@ class InvestigationPlan:
 
 SUPPORTED_INVESTIGATION_TYPES = (
     "invoice review reasons and review-queue drivers",
+    "why a specific invoice needs attention or review",
     "validation mismatch patterns",
     "vendor mismatch / repeated vendor issues",
     "documents requiring attention",
@@ -45,6 +46,72 @@ def _normalize(question: str) -> str:
     return re.sub(r"\s+", " ", cleaned).strip()
 
 
+def _extract_invoice_number(question: str) -> str | None:
+    """Extract a specific invoice number reference from the original question text."""
+    text = question or ""
+    # Prefer explicit INV-<id> tokens (must not match the English word "invoice").
+    inv_style = re.search(
+        r"\b(INV[-_/]?[0-9][A-Za-z0-9\-/]{0,40})\b",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if inv_style:
+        raw = re.sub(r"\s+", "", inv_style.group(1))
+        safe = re.sub(r"[^A-Za-z0-9\-/]", "", raw)
+        if len(safe) >= 3 and safe[:3].upper() == "INV":
+            return "INV" + safe[3:]
+        return safe or None
+
+    labeled = re.search(
+        r"\binvoice(?:\s+number)?[\s#:.-]+([A-Za-z0-9][A-Za-z0-9\-/]{1,40})\b",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if labeled:
+        candidate = labeled.group(1)
+        # Ignore accidental capture of filler words.
+        if candidate.lower() in {"the", "a", "an", "is", "to", "for", "with", "from"}:
+            return None
+        safe = re.sub(r"[^A-Za-z0-9\-/]", "", candidate)
+        return safe or None
+    return None
+
+
+def _safe_invoice_sql_literal(invoice_number: str) -> str:
+    """Allow only controlled characters in interpolated invoice-number literals."""
+    return re.sub(r"[^A-Za-z0-9\-/]", "", invoice_number or "")[:50]
+
+
+def _is_specific_invoice_attention_question(q: str) -> bool:
+    """True when the normalized question asks why a specific invoice needs attention."""
+    attention_markers = (
+        "attention",
+        "review",
+        "flagged",
+        "flag",
+        "issues",
+        "issue",
+    )
+    if not any(marker in q for marker in attention_markers):
+        return False
+    if re.search(r"\b(why|what|explain|reason)\b", q):
+        return True
+    if any(
+        phrase in q
+        for phrase in (
+            "under review",
+            "need review",
+            "needs review",
+            "need attention",
+            "needs attention",
+            "requiring attention",
+            "require attention",
+        )
+    ):
+        return True
+    return False
+
+
 def plan_investigation(question: str) -> InvestigationPlan:
     """Map a natural-language investigation question to a deterministic plan."""
     q = _normalize(question)
@@ -56,10 +123,18 @@ def plan_investigation(question: str) -> InvestigationPlan:
             unsupported_message="Please enter an investigation question.",
         )
 
+    # Specific invoice / document attention (e.g. Why does invoice INV-1827 need attention?)
+    invoice_number = _extract_invoice_number(question)
+    if invoice_number and _is_specific_invoice_attention_question(q):
+        return _plan_invoice_attention(invoice_number)
+
     # Why invoices / documents go to review
     if (
         re.search(r"\bwhy\b.*\b(invoices?|documents?)\b.*\breview\b", q)
-        or re.search(r"\b(invoices?|documents?)\b.*\b(sent|going|requir)\w*\b.*\breview\b", q)
+        or re.search(
+            r"\b(invoices?|documents?)\b.*\b(sent|going|requir|need|flagged)\w*\b.*\breview\b", q
+        )
+        or re.search(r"\b(invoices?|documents?)\b.*\bin review\b", q)
         or "review required" in q
         or "why are invoices being sent to review" in q
     ):
@@ -78,6 +153,9 @@ def plan_investigation(question: str) -> InvestigationPlan:
         re.search(r"\brepeated\b.*\b(issues?|problems?|mismatches?)\b.*\bvendors?\b", q)
         or re.search(r"\brepeated\b.*\bvendors?\b", q)
         or "repeated issues with vendors" in q
+        # Natural phrasing: "Why does vendor X have issues?", "vendor problems"
+        or re.search(r"\bvendors?\b.*\b(issues?|problems?|errors?|discrepanc\w*)\b", q)
+        or re.search(r"\b(issues?|problems?|errors?|discrepanc\w*)\b.*\bvendors?\b", q)
     ):
         return _plan_repeated_vendor_issues()
 
@@ -142,6 +220,101 @@ def plan_investigation(question: str) -> InvestigationPlan:
             "Supported investigation types include: "
             + "; ".join(SUPPORTED_INVESTIGATION_TYPES)
             + "."
+        ),
+    )
+
+
+def _plan_invoice_attention(invoice_number: str) -> InvestigationPlan:
+    """Investigate why a specific invoice/document needs attention or review."""
+    safe = _safe_invoice_sql_literal(invoice_number)
+    if not safe:
+        return InvestigationPlan(
+            template_id="unsupported",
+            title="Unsupported investigation",
+            status="unsupported",
+            unsupported_message="Could not extract a safe invoice number from the question.",
+        )
+    lit = f"'{safe}'"
+    return InvestigationPlan(
+        template_id="invoice_attention",
+        title=f"Invoice {safe} attention investigation",
+        status="ready",
+        queries=(
+            PlannedQuery(
+                step_id="invoice_record",
+                question=f"Invoice record and linked document status for {safe}",
+                sql=(
+                    "SELECT i.invoice_number, i.vendor_name, i.total_amount, i.currency, "
+                    "i.extraction_confidence, d.original_filename AS filename, "
+                    "d.status AS document_status, d.document_type, "
+                    "d.classification_confidence "
+                    "FROM invoices i "
+                    "JOIN documents d ON d.id = i.document_id "
+                    f"WHERE i.invoice_number = {lit}"
+                ),
+                analysis_key="invoice_record",
+            ),
+            PlannedQuery(
+                step_id="invoice_reviews",
+                question=f"Review queue entries linked to invoice {safe}",
+                sql=(
+                    "SELECT r.reason, r.priority, r.status, r.created_at, "
+                    "d.original_filename AS filename "
+                    "FROM document_reviews r "
+                    "JOIN documents d ON d.id = r.document_id "
+                    "JOIN invoices i ON i.document_id = d.id "
+                    f"WHERE i.invoice_number = {lit} "
+                    "ORDER BY r.created_at DESC"
+                ),
+                analysis_key="invoice_reviews",
+            ),
+            PlannedQuery(
+                step_id="invoice_validations",
+                question=f"Validation results for invoice {safe}",
+                sql=(
+                    "SELECT dv.status, dv.vendor_match, dv.currency_match, "
+                    "dv.subtotal_match, dv.tax_match, dv.total_match, "
+                    "dv.invoice_number, dv.po_number "
+                    "FROM document_validations dv "
+                    "JOIN invoices i ON i.id = dv.invoice_id "
+                    f"WHERE i.invoice_number = {lit} "
+                    "ORDER BY dv.created_at DESC"
+                ),
+                analysis_key="invoice_validations",
+            ),
+            PlannedQuery(
+                step_id="invoice_missing_fields",
+                question=f"Missing key fields check for invoice {safe}",
+                sql=(
+                    "SELECT i.invoice_number, i.vendor_name, i.total_amount, i.currency, "
+                    "d.original_filename AS filename "
+                    "FROM invoices i "
+                    "JOIN documents d ON d.id = i.document_id "
+                    f"WHERE i.invoice_number = {lit} "
+                    "AND ("
+                    "i.invoice_number IS NULL OR i.total_amount IS NULL "
+                    "OR i.vendor_name IS NULL OR i.currency IS NULL"
+                    ")"
+                ),
+                analysis_key="invoice_missing_fields",
+            ),
+            PlannedQuery(
+                step_id="invoice_duplicate_check",
+                question=f"Duplicate invoice-number occurrences for {safe}",
+                sql=(
+                    "SELECT invoice_number, COUNT(*) AS occurrence_count "
+                    "FROM invoices "
+                    f"WHERE invoice_number = {lit} "
+                    "GROUP BY invoice_number"
+                ),
+                analysis_key="invoice_duplicate_check",
+            ),
+        ),
+        suggested_next_steps=(
+            f"Open the Review Queue item linked to invoice {safe} and confirm the listed reason.",
+            "Inspect Validation results for mismatch flags on this invoice.",
+            "Verify classification/extraction confidence and complete any missing fields if needed.",
+            "Compare documents if the invoice number appears more than once.",
         ),
     )
 

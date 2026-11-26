@@ -1,120 +1,222 @@
 .ingestion-history {
   display: grid;
-  gap: 1rem;
+  gap: 1.15rem;
+  max-width: 1100px;
 }
 
 .ingestion-history__header h2 {
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 2.2vw, 2.2rem);
 }
 
 .ingestion-history__header p {
   margin: 0;
-  color: #5b6b7c;
+  color: var(--text-muted);
+  max-width: 58ch;
+  line-height: 1.5;
 }
 
 .ingestion-history__email {
   display: grid;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid #d7dee7;
-  background: #f7f9fb;
+  gap: 0.85rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 2px);
+  background: var(--surface);
 }
 
 .ingestion-history__email-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
-  font-size: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.85rem;
+  font-size: 0.92rem;
 }
 
 .ingestion-history__email-grid strong {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: #5b6b7c;
-  margin-bottom: 0.2rem;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+  font-weight: 650;
 }
 
 .ingestion-history__email button {
   justify-self: start;
+  border: 0;
+  border-radius: 9px;
   font: inherit;
-  padding: 0.45rem 0.8rem;
+  font-weight: 600;
+  padding: 0.55rem 0.95rem;
+  background: var(--accent);
+  color: #f7fbf8;
   cursor: pointer;
+}
+
+.ingestion-history__email button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .ingestion-history__email-msg {
   margin: 0;
-  color: #345;
+  color: var(--ink-soft);
   font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .ingestion-history__filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.85rem 1rem;
+  align-items: flex-end;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 2px);
+  background: var(--surface);
 }
 
 .ingestion-history__filters label {
   display: grid;
-  gap: 0.3rem;
-  font-size: 0.85rem;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-soft);
 }
 
 .ingestion-history__filters select {
   font: inherit;
-  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  padding: 0.5rem 0.7rem;
+  background: #fff;
+  min-width: 10rem;
 }
 
 .ingestion-history__error {
-  padding: 0.6rem 0.75rem;
-  background: #fff1f1;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius);
+  background: var(--danger-bg);
   border: 1px solid #e7b6b6;
-  color: #7a2e2e;
+  color: var(--danger);
+}
+
+.ingestion-history__table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 2px);
+  background: rgba(250, 252, 248, 0.78);
 }
 
 .ingestion-history__table {
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
-  background: #fff;
+  background: transparent;
 }
 
 .ingestion-history__table th,
 .ingestion-history__table td {
-  border-bottom: 1px solid #e3e8ef;
+  border-bottom: 1px solid var(--line);
   text-align: left;
-  padding: 0.55rem 0.4rem;
+  padding: 0.75rem 0.85rem;
   font-size: 0.9rem;
   vertical-align: top;
 }
 
+.ingestion-history__table th {
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(231, 238, 232, 0.85);
+  font-weight: 650;
+}
+
+.ingestion-history__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.ingestion-history__filename {
+  font-weight: 550;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 28ch;
+  line-height: 1.35;
+}
+
+.ingestion-history__code {
+  font-size: 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--ink-soft);
+}
+
 .ingestion-history__err {
-  color: #7a2e2e;
+  color: var(--danger);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 28ch;
+  font-size: 0.84rem;
 }
 
 .ingestion-history__status {
+  display: inline-flex;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
   text-transform: capitalize;
+  font-size: 0.74rem;
+  font-weight: 650;
+  background: var(--panel);
+  color: var(--ink-soft);
 }
 
 .ingestion-history__status--completed {
-  color: #245536;
+  background: var(--success-bg);
+  color: var(--success);
 }
 
 .ingestion-history__status--failed {
-  color: #7a2e2e;
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 
 .ingestion-history__status--skipped {
-  color: #6a5a20;
+  background: var(--warn-bg);
+  color: var(--warning);
 }
 
 .ingestion-history__pager {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.85rem;
+  flex-wrap: wrap;
 }
 
 .ingestion-history__pager button {
   font: inherit;
-  padding: 0.35rem 0.7rem;
+  font-weight: 600;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  padding: 0.45rem 0.8rem;
+  background: #fff;
+}
+
+.ingestion-history__pager button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .ingestion-history__filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ingestion-history__filters select,
+  .ingestion-history__email button {
+    width: 100%;
+  }
 }

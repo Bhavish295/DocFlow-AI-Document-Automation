@@ -27,21 +27,81 @@ class AgentPlan:
     resolved: dict[str, Any] = field(default_factory=dict)
 
 
-_INVOICE_REF = re.compile(
-    r"\b(?:invoice|inv)[\s#:.-]*([A-Za-z0-9][A-Za-z0-9\-/]{1,40})\b",
-    re.IGNORECASE,
-)
 _AMOUNT_OVER = re.compile(
     r"\b(?:over|above|greater than|>)\s*\$?\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)\b",
     re.IGNORECASE,
 )
 
+_FILLER_INVOICE_TOKENS = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "is",
+        "to",
+        "for",
+        "with",
+        "from",
+        "and",
+        "or",
+        "why",
+        "how",
+        "what",
+        "needs",
+        "need",
+        "attention",
+        "review",
+        "investigate",
+        "investigation",
+        "estigate",
+        "invoice",
+        "invoices",
+    }
+)
+
 
 def _extract_invoice_number(question: str) -> str | None:
-    match = _INVOICE_REF.search(question or "")
-    if not match:
-        return None
-    return match.group(1).strip()
+    """
+    Extract an invoice identifier from natural language.
+
+    Prioritizes explicit INV-… / INV/… patterns and never treats substrings of
+    words like "investigate", "invoice", or "investigation" as invoice numbers.
+    """
+    text = question or ""
+
+    # Explicit identifiers: INV-1827, INV1001, INV/2026/001
+    inv_style = re.search(
+        r"\b(INV[-_/]?[0-9][A-Za-z0-9\-/]{0,40})\b",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if inv_style:
+        raw = re.sub(r"\s+", "", inv_style.group(1))
+        safe = re.sub(r"[^A-Za-z0-9\-/]", "", raw)
+        if len(safe) >= 3 and safe[:3].upper() == "INV":
+            return "INV" + safe[3:]
+        return safe or None
+
+    # Labeled forms: "invoice INV-1827", "invoice number 1001", "invoice #ABC-9"
+    labeled = re.search(
+        r"\binvoice(?:\s+number)?[\s#:.-]+([A-Za-z0-9][A-Za-z0-9\-/]{1,40})\b",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if labeled:
+        candidate = labeled.group(1).strip()
+        lower_candidate = candidate.lower()
+        if lower_candidate in _FILLER_INVOICE_TOKENS:
+            return None
+        # Require an identifier-like token (digit and/or separator), not English words.
+        if not re.search(r"[0-9]", candidate) and not re.search(r"[-/]", candidate):
+            return None
+        if lower_candidate.isalpha():
+            return None
+        safe = re.sub(r"[^A-Za-z0-9\-/]", "", candidate)
+        return safe or None
+
+    return None
 
 
 def _extract_amount(question: str) -> str | None:
@@ -75,6 +135,16 @@ class DeterministicAgentPlanner:
         ):
             return self._plan_review_explanation(invoice_number)
 
+        # A2. Investigate why a specific invoice needs attention / has issues
+        # Prefer the read-only Investigation Agent for attention-style questions.
+        if invoice_number and any(
+            token in lower for token in ("attention", "flagged", "issues", "issue")
+        ) and any(
+            token in lower
+            for token in ("investigate", "investigation", "why", "explain", "reason", "summarize")
+        ):
+            return self._plan_invoice_attention_via_investigation(q, invoice_number)
+
         # B. Investigate invoice X
         if invoice_number and any(
             token in lower for token in ("investigate", "investigation", "deep dive", "look into")
@@ -82,7 +152,9 @@ class DeterministicAgentPlanner:
             return self._plan_invoice_investigation(invoice_number)
 
         # Generic invoice status / why without explicit investigate
-        if invoice_number and any(token in lower for token in ("why", "status", "explain", "review")):
+        if invoice_number and any(
+            token in lower for token in ("why", "status", "explain", "review", "attention")
+        ):
             return self._plan_review_explanation(invoice_number)
 
         # C. Find unusual invoices
@@ -116,6 +188,25 @@ class DeterministicAgentPlanner:
                     PlannedStep(
                         tool_name="run_investigation",
                         purpose="Run read-only multi-query investigation",
+                        arguments={"question": q},
+                    )
+                ],
+            )
+
+        # Any other question the read-only Investigation planner understands
+        # (review drivers, vendor issues, missing fields, low confidence, duplicates...).
+        # Totals by vendor stay with the SQL tool, which returns the table directly.
+        from app.services.investigation_planner import plan_investigation
+
+        investigation = plan_investigation(q)
+        if investigation.status == "ready" and investigation.template_id != "invoice_totals_by_vendor":
+            return AgentPlan(
+                status="ready",
+                intent="general_investigation",
+                steps=[
+                    PlannedStep(
+                        tool_name="run_investigation",
+                        purpose=f"Run read-only investigation: {investigation.title}",
                         arguments={"question": q},
                     )
                 ],
@@ -206,6 +297,42 @@ class DeterministicAgentPlanner:
                 PlannedStep("get_review", "Load review details for the document", {"document_id": doc_id}),
                 PlannedStep("get_duplicate_findings", "Check duplicate findings", {"document_id": doc_id}),
             ],
+        )
+
+    def _plan_invoice_attention_via_investigation(
+        self, question: str, invoice_number: str
+    ) -> AgentPlan:
+        """Route attention questions through the controlled Investigation Agent."""
+        invoice = find_invoice_by_number(self.db, invoice_number)
+        if invoice is None:
+            return AgentPlan(
+                status="unsupported",
+                intent="invoice_attention_investigation",
+                explanation=f"No invoice matching '{invoice_number}' was found.",
+            )
+        return AgentPlan(
+            status="ready",
+            intent="invoice_attention_investigation",
+            resolved={
+                "document_id": str(invoice.document_id),
+                "invoice_id": str(invoice.id),
+                "invoice_number": invoice_number,
+            },
+            steps=[
+                PlannedStep(
+                    "get_invoice",
+                    "Confirm invoice record before investigation",
+                    {"invoice_number": invoice_number},
+                ),
+                PlannedStep(
+                    "run_investigation",
+                    "Investigate why this invoice needs attention and summarize findings",
+                    {"question": question},
+                ),
+            ],
+            explanation=(
+                f"Investigate invoice {invoice_number} via the read-only Investigation Agent."
+            ),
         )
 
     def _plan_invoice_investigation(self, invoice_number: str) -> AgentPlan:

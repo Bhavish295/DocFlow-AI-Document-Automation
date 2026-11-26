@@ -121,3 +121,90 @@ def test_analysis_marks_query_errors():
         ],
     )
     assert any(f.type == "observation" and "could not be completed" in f.description for f in result.findings)
+
+
+def test_analysis_invoice_attention():
+    result = analyze_investigation_results(
+        "invoice_attention",
+        [
+            {
+                "step_id": "invoice_record",
+                "question": "invoice",
+                "sql": "SELECT 1",
+                "analysis_key": "invoice_record",
+                "columns": [
+                    "invoice_number",
+                    "vendor_name",
+                    "total_amount",
+                    "currency",
+                    "extraction_confidence",
+                    "document_status",
+                    "classification_confidence",
+                ],
+                "rows": [
+                    {
+                        "invoice_number": "INV-1827",
+                        "vendor_name": "ABC",
+                        "total_amount": 531000,
+                        "currency": "PKR",
+                        "extraction_confidence": 0.5,
+                        "document_status": "manual_review",
+                        "classification_confidence": 0.4,
+                    }
+                ],
+                "row_count": 1,
+                "error": None,
+            },
+            {
+                "step_id": "invoice_reviews",
+                "question": "reviews",
+                "sql": "SELECT 1",
+                "analysis_key": "invoice_reviews",
+                "columns": ["reason", "priority", "status"],
+                "rows": [
+                    {
+                        "reason": "validation_mismatch",
+                        "priority": "high",
+                        "status": "pending",
+                    }
+                ],
+                "row_count": 1,
+                "error": None,
+            },
+            {
+                "step_id": "invoice_validations",
+                "question": "validations",
+                "sql": "SELECT 1",
+                "analysis_key": "invoice_validations",
+                "columns": ["status", "total_match"],
+                "rows": [{"status": "mismatch", "total_match": False}],
+                "row_count": 1,
+                "error": None,
+            },
+            {
+                "step_id": "invoice_missing_fields",
+                "question": "missing",
+                "sql": "SELECT 1",
+                "analysis_key": "invoice_missing_fields",
+                "columns": [],
+                "rows": [],
+                "row_count": 0,
+                "error": None,
+            },
+            {
+                "step_id": "invoice_duplicate_check",
+                "question": "dup",
+                "sql": "SELECT 1",
+                "analysis_key": "invoice_duplicate_check",
+                "columns": ["invoice_number", "occurrence_count"],
+                "rows": [{"invoice_number": "INV-1827", "occurrence_count": 1}],
+                "row_count": 1,
+                "error": None,
+            },
+        ],
+    )
+    joined = " ".join(finding.description for finding in result.findings)
+    assert "INV-1827" in joined
+    assert "validation_mismatch" in joined
+    assert "Low classification confidence" in " ".join(f.title for f in result.findings)
+    assert "Low extraction confidence" in " ".join(f.title for f in result.findings)

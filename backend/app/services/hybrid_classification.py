@@ -15,6 +15,9 @@ DISAGREE_CONFIDENCE_FACTOR = 0.85
 STRONG_CONFIDENCE_MIN = 0.70
 STRONG_MARGIN_MIN = 0.15
 UNCERTAIN_CONFIDENCE_CAP = 0.49
+# Prefer clear rule-based goods_receipt over a weaker conflicting ML guess
+# (common confusion: GRN vs purchase_order when a PO number is present).
+RULE_GOODS_RECEIPT_PREFER_MIN = 0.55
 
 
 @dataclass(frozen=True)
@@ -49,6 +52,10 @@ def combine_rule_and_ml(
     3. Different labels:
        - If the stronger side has confidence >= 0.70 and leads by >= 0.15,
          prefer that label and multiply confidence by 0.85 (`hybrid_prefer_stronger`).
+       - If rule-based predicts `goods_receipt` with confidence >= 0.55 and leads ML
+         by >= 0.15, prefer the rule label (`hybrid_prefer_stronger`). This keeps
+         unambiguous GRN documents from being downgraded to `other` when ML
+         confuses them with purchase orders because a PO number is present.
        - Otherwise classify as `other` with capped low confidence (`hybrid_uncertain`).
     """
     if ml is None:
@@ -89,10 +96,20 @@ def combine_rule_and_ml(
         weaker_conf = rule_conf
 
     margin = stronger_conf - weaker_conf
-    if stronger_conf >= STRONG_CONFIDENCE_MIN and margin >= STRONG_MARGIN_MIN:
-        preferred = min(0.99, stronger_conf * DISAGREE_CONFIDENCE_FACTOR)
+    prefer_rule_goods_receipt = (
+        rule_type == DocumentType.GOODS_RECEIPT.value
+        and rule_conf >= RULE_GOODS_RECEIPT_PREFER_MIN
+        and rule_conf > ml_conf
+        and margin >= STRONG_MARGIN_MIN
+    )
+    prefer_stronger = stronger_conf >= STRONG_CONFIDENCE_MIN and margin >= STRONG_MARGIN_MIN
+
+    if prefer_rule_goods_receipt or prefer_stronger:
+        chosen_type = rule_type if prefer_rule_goods_receipt else stronger_type
+        chosen_conf = rule_conf if prefer_rule_goods_receipt else stronger_conf
+        preferred = min(0.99, chosen_conf * DISAGREE_CONFIDENCE_FACTOR)
         return HybridClassificationResult(
-            document_type=stronger_type,
+            document_type=chosen_type,
             confidence=_clamp(preferred),
             classification_method="hybrid_prefer_stronger",
             rule_based_type=rule_type,

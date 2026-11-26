@@ -60,6 +60,97 @@ def _extract_amount_threshold(question: str) -> float | None:
         return None
 
 
+_KNOWN_CURRENCIES = frozenset(
+    {
+        "PKR",
+        "USD",
+        "EUR",
+        "GBP",
+        "INR",
+        "AED",
+        "SAR",
+        "CAD",
+        "AUD",
+        "JPY",
+        "CNY",
+        "CHF",
+    }
+)
+
+
+def _extract_currency_code(question: str) -> str | None:
+    """Extract an optional ISO-like currency code from the question text."""
+    text = question or ""
+    labeled = re.search(
+        r"\b(?:for|in|currency)\s+([A-Za-z]{3})\b",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if labeled:
+        code = labeled.group(1).upper()
+        # Avoid false positives like "in the system" capturing "the".
+        if code in _KNOWN_CURRENCIES:
+            return code
+    common = re.search(
+        r"\b(" + "|".join(sorted(_KNOWN_CURRENCIES)) + r")\b",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if common:
+        return common.group(1).upper()
+    return None
+
+
+def _is_invoice_total_value_question(q: str) -> bool:
+    """Detect natural-language questions asking for aggregate invoice monetary value."""
+    if "total invoice amount" in q or "total invoice value" in q:
+        return True
+    if "sum of invoice" in q:
+        return True
+    if re.search(r"\b(total|sum)\b.*\b(amount|value|worth|totals?)\b.*\binvoices?\b", q):
+        return True
+    if re.search(r"\b(total|sum)\b.*\binvoices?\b.*\b(amount|value|worth|totals?)\b", q):
+        return True
+    if re.search(r"\b(total|sum)\b.*\binvoice\b.*\b(amount|value|worth|totals?)\b", q):
+        return True
+    if re.search(r"\binvoice\b.*\b(total|sum)\b.*\b(amount|value|worth|totals?)\b", q):
+        return True
+    if re.search(r"\bhow much\b.*\binvoices?\b.*\b(worth|total|value)\b", q):
+        return True
+    if re.search(r"\ball invoices?\b.*\b(worth|value|total)\b", q):
+        return True
+    if re.search(r"\binvoice totals?\b", q) and not _is_per_vendor_question(q):
+        return True
+    return False
+
+
+def _is_per_vendor_question(q: str) -> bool:
+    return bool(
+        re.search(r"\b(by|per|for each|each|grouped by|group by|breakdown by)\s+vendors?\b", q)
+        or re.search(r"\bvendor[- ]?wise\b", q)
+    )
+
+
+def _invoice_total_sql(*, currency: str | None = None) -> str:
+    """Build a SELECT that never mixes currencies into one total."""
+    if currency:
+        safe = re.sub(r"[^A-Z]", "", currency.upper())[:3]
+        if safe not in _KNOWN_CURRENCIES:
+            safe = "XXX"
+        return (
+            "SELECT COALESCE(SUM(total_amount), 0) AS total_invoice_amount "
+            "FROM invoices "
+            f"WHERE currency = '{safe}'"
+        )
+    return (
+        "SELECT COALESCE(currency, 'Unknown') AS currency, "
+        "COALESCE(SUM(total_amount), 0) AS total_invoice_amount "
+        "FROM invoices "
+        "GROUP BY currency "
+        "ORDER BY currency"
+    )
+
+
 class DeterministicSQLGenerator:
     """Development-friendly generator for common business analytics questions."""
 
@@ -132,24 +223,25 @@ class DeterministicSQLGenerator:
                 status="ready",
             )
 
-        if re.search(r"\b(total|sum)\b.*\binvoice\b.*\bamount\b", q) or "total invoice amount" in q:
+        # Must run before the generic total rule, or "total ... by vendor" loses its grouping.
+        if _is_per_vendor_question(q) and "invoice" in q:
+            # Per-vendor totals, kept separate per currency (never mix currencies).
             return SqlGenerationResult(
                 sql=(
-                    "SELECT COALESCE(SUM(total_amount), 0) AS total_invoice_amount "
-                    "FROM invoices"
+                    "SELECT COALESCE(vendor_name, 'Unknown') AS vendor_name, "
+                    "COALESCE(currency, 'Unknown') AS currency, "
+                    "COUNT(*) AS invoice_count, "
+                    "COALESCE(SUM(total_amount), 0) AS invoice_total "
+                    "FROM invoices GROUP BY vendor_name, currency "
+                    "ORDER BY invoice_total DESC"
                 ),
                 status="ready",
             )
 
-        if re.search(r"\binvoice totals? by vendor\b", q) or (
-            "by vendor" in q and "invoice" in q
-        ):
+        if _is_invoice_total_value_question(q):
+            currency = _extract_currency_code(question)
             return SqlGenerationResult(
-                sql=(
-                    "SELECT COALESCE(vendor_name, 'Unknown') AS vendor_name, "
-                    "COALESCE(SUM(total_amount), 0) AS invoice_total "
-                    "FROM invoices GROUP BY vendor_name ORDER BY invoice_total DESC"
-                ),
+                sql=_invoice_total_sql(currency=currency),
                 status="ready",
             )
 

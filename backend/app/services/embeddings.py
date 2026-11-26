@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 import logging
+import threading
 from typing import Protocol
 
 from app.core.config import settings
@@ -31,10 +32,19 @@ class SentenceTransformerEmbeddingProvider:
         self.model_name = model_name or settings.EMBEDDING_MODEL
         self.dimension = dimension or settings.EMBEDDING_DIMENSION
         self._model = None
+        # Several background processing jobs can index at once; loading the model
+        # concurrently from multiple threads fails intermittently, so serialize it.
+        self._load_lock = threading.Lock()
 
     def _load_model(self):
         if self._model is not None:
             return self._model
+        with self._load_lock:
+            if self._model is not None:
+                return self._model
+            return self._load_model_locked()
+
+    def _load_model_locked(self):
         try:
             from sentence_transformers import SentenceTransformer
         except ImportError as exc:

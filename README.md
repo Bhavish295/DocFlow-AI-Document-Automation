@@ -306,7 +306,7 @@ Possible future hosts: AWS, Azure, GCP, Railway, Render. **Do not treat “Docke
 ```bash
 cd backend
 .venv\Scripts\activate   # Windows
-pytest                   # Step 28: 326 passed
+pytest                   # 349 passed
 
 cd ../frontend
 npm run build            # Vite production build

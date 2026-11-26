@@ -189,7 +189,15 @@ def test_deterministic_sql_generation_common_questions():
         ("How many vendors are registered?", "vendors"),
         ("How many validation mismatches are there?", "document_validations"),
         ("What is the total invoice amount?", "SUM(total_amount)"),
-        ("Show invoice totals by vendor.", "GROUP BY"),
+        ("What is the total invoice value in the system?", "GROUP BY currency"),
+        ("What is the sum of invoice totals?", "SUM(total_amount)"),
+        ("What is the total amount of all invoices?", "SUM(total_amount)"),
+        ("How much are all invoices worth?", "SUM(total_amount)"),
+        ("What is the total invoice value for PKR?", "PKR"),
+        ("Show invoice totals by vendor.", "GROUP BY vendor_name"),
+        ("What is the total invoice amount by vendor?", "GROUP BY vendor_name, currency"),
+        ("Total invoice value per vendor", "GROUP BY vendor_name"),
+        ("Show vendor-wise invoice totals", "GROUP BY vendor_name"),
         ("Which vendors have invoices?", "JOIN"),
         ("How many invoices are above 100000?", "total_amount > 100000"),
     ]
@@ -198,6 +206,23 @@ def test_deterministic_sql_generation_common_questions():
         assert result.status == "ready", question
         assert result.sql is not None
         assert expected_fragment.lower() in result.sql.lower()
+
+
+def test_invoice_total_sql_does_not_mix_currencies():
+    gen = DeterministicSQLGenerator()
+    result = gen.generate_sql("What is the total invoice value in the system?")
+    assert result.status == "ready"
+    sql = (result.sql or "").lower()
+    assert "sum(total_amount)" in sql
+    assert "group by currency" in sql
+    assert "where" not in sql or "currency" in sql
+
+    pkr = gen.generate_sql("What is the total invoice value for PKR?")
+    assert pkr.status == "ready"
+    pkr_sql = (pkr.sql or "").lower()
+    assert "sum(total_amount)" in pkr_sql
+    assert "pkr" in pkr_sql
+    assert "group by" not in pkr_sql
 
 
 def test_deterministic_unsupported_question():
@@ -243,7 +268,24 @@ def test_sql_ask_aggregates_and_filters(client):
         json={"question": "What is the total invoice amount?"},
     ).json()
     assert total["status"] == "success"
+    assert total["row_count"] == 1
+    assert total["rows"][0]["currency"] == "PKR"
     assert float(total["rows"][0]["total_invoice_amount"]) == 400000.0
+
+    value_q = client.post(
+        "/api/v1/sql/ask",
+        json={"question": "What is the total invoice value in the system?"},
+    ).json()
+    assert value_q["status"] == "success"
+    assert value_q["row_count"] == 1
+    assert float(value_q["rows"][0]["total_invoice_amount"]) == 400000.0
+
+    pkr = client.post(
+        "/api/v1/sql/ask",
+        json={"question": "What is the total invoice value for PKR?"},
+    ).json()
+    assert pkr["status"] == "success"
+    assert float(pkr["rows"][0]["total_invoice_amount"]) == 400000.0
 
     above = client.post(
         "/api/v1/sql/ask",
@@ -272,6 +314,65 @@ def test_sql_ask_aggregates_and_filters(client):
     ).json()
     assert pos["status"] == "success"
     assert pos["rows"][0]["purchase_order_count"] == 1
+
+
+def test_sql_ask_invoice_totals_do_not_mix_currencies(client):
+    db = client.testing_session_local()
+    try:
+        vendor = Vendor(name="Multi FX Co", normalized_name="multi fx co")
+        db.add(vendor)
+        db.flush()
+        docs = []
+        for name, amount, currency in [
+            ("inv-pkr.pdf", 531000, "PKR"),
+            ("inv-usd.pdf", 1000, "USD"),
+        ]:
+            doc = Document(
+                original_filename=name,
+                stored_filename=f"{uuid.uuid4()}.pdf",
+                file_type="pdf",
+                file_size=100,
+                storage_path=f"storage/uploads/{name}",
+                status=DocumentStatus.PROCESSED.value,
+                document_type="invoice",
+                uploaded_at=datetime.now(timezone.utc),
+            )
+            db.add(doc)
+            db.flush()
+            docs.append(doc)
+            db.add(
+                Invoice(
+                    document_id=doc.id,
+                    vendor_id=vendor.id,
+                    vendor_name=vendor.name,
+                    invoice_number=f"INV-{currency}",
+                    total_amount=amount,
+                    currency=currency,
+                )
+            )
+        db.commit()
+    finally:
+        db.close()
+
+    response = client.post(
+        "/api/v1/sql/ask",
+        json={"question": "What is the total amount of all invoices?"},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "success"
+    assert payload["row_count"] == 2
+    by_currency = {
+        row["currency"]: float(row["total_invoice_amount"]) for row in payload["rows"]
+    }
+    assert by_currency["PKR"] == 531000.0
+    assert by_currency["USD"] == 1000.0
+    assert "not combined" in payload["answer"].lower() or "currency" in payload["answer"].lower()
+
+    # A single combined total must not be returned when currencies differ.
+    assert not any(
+        abs(float(row["total_invoice_amount"]) - 532000.0) < 0.01 for row in payload["rows"]
+    )
 
 
 def test_sql_ask_unsupported(client):
@@ -348,3 +449,18 @@ def test_invalid_generated_sql_path(client, monkeypatch):
     payload = response.json()
     assert payload["status"] == "invalid_query"
     assert payload["rows"] == []
+
+
+def test_human_answer_names_vendors_for_per_vendor_totals():
+    from app.services.sql_agent import build_human_answer
+
+    answer = build_human_answer(
+        "What is the total invoice amount by vendor?",
+        ["vendor_name", "currency", "invoice_count", "invoice_total"],
+        [
+            {"vendor_name": "ABC Pvt Ltd", "currency": "PKR", "invoice_count": 2, "invoice_total": 1062000.0},
+            {"vendor_name": "Acme", "currency": "USD", "invoice_count": 1, "invoice_total": 400.0},
+        ],
+    )
+    assert "ABC Pvt Ltd: 1062000.0 PKR" in answer
+    assert "Acme: 400.0 USD" in answer

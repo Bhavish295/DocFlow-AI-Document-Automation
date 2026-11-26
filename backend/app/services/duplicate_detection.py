@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal
+import logging
 from math import ceil
 from typing import Any
 import uuid
@@ -56,6 +57,9 @@ def _to_decimal(value: Any) -> Decimal | None:
         return None
 
 
+logger = logging.getLogger(__name__)
+
+
 class DuplicateDetectionService:
     def __init__(self, db: Session) -> None:
         self.db = db
@@ -78,6 +82,17 @@ class DuplicateDetectionService:
             "items": items,
             "summary": self.summary_for_document(document_id),
         }
+
+    def safe_check_document(self, document_id: uuid.UUID) -> dict[str, Any] | None:
+        """Run duplicate detection after processing; never fails the processing pipeline."""
+        if not settings.DUPLICATE_AUTO_CHECK_ENABLED:
+            return None
+        try:
+            return self.check_document(document_id)
+        except Exception:
+            logger.exception("Automatic duplicate check failed for document %s", document_id)
+            self.db.rollback()
+            return None
 
     def _detect_exact(self, document: Document) -> list[DocumentDuplicate]:
         if not document.content_hash:

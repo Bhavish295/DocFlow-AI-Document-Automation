@@ -154,6 +154,45 @@ def build_human_answer(
     if not rows:
         return "No matching business records were found for that question."
 
+    amount_column = next(
+        (
+            column
+            for column in columns
+            if any(token in column.lower() for token in ("total", "amount", "sum"))
+        ),
+        None,
+    )
+    currency_column = next(
+        (column for column in columns if "currency" in column.lower()),
+        None,
+    )
+
+    vendor_column = next((column for column in columns if "vendor" in column.lower()), None)
+    if vendor_column and amount_column:
+        parts = []
+        for row in rows:
+            part = f"{row.get(vendor_column) or 'Unknown'}: {row.get(amount_column)}"
+            if currency_column:
+                part += f" {row.get(currency_column) or ''}".rstrip()
+            parts.append(part)
+        shown = parts[:10]
+        more = f" (+{len(parts) - len(shown)} more in the table)" if len(parts) > len(shown) else ""
+        return "Invoice totals by vendor: " + "; ".join(shown) + more + "."
+
+    if currency_column and amount_column and len(rows) >= 1:
+        parts = [
+            f"{row.get(currency_column) or 'Unknown'}: {row.get(amount_column)}"
+            for row in rows
+        ]
+        if len(parts) == 1:
+            currency_label, amount_label = [part.strip() for part in parts[0].split(":", 1)]
+            return f"The total invoice amount for {currency_label} is {amount_label}."
+        return (
+            "Invoice totals by currency (currencies are not combined): "
+            + "; ".join(parts)
+            + "."
+        )
+
     if len(rows) == 1 and len(columns) == 1:
         key = columns[0]
         value = rows[0].get(key)

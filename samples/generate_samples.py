@@ -49,7 +49,7 @@ def build_pdf(path: Path, lines: list[str]) -> None:
 
 
 def build_png(path: Path, lines: list[str]) -> None:
-    image = Image.new("RGB", (900, 460), "white")
+    image = Image.new("RGB", (900, 80 + 30 * len(lines)), "white")
     draw = ImageDraw.Draw(image)
     font = ImageFont.load_default()
     y = 40
@@ -62,29 +62,59 @@ def build_png(path: Path, lines: list[str]) -> None:
 def main() -> None:
     OUT.mkdir(exist_ok=True)
 
+    # One consistent Invoice / PO / GRN set so 3-way matching can fully match:
+    # same vendor, PO-7788 referenced everywhere, GRN-1001 referenced on the invoice,
+    # and one line item (DEV-001) with matching quantity and amounts.
+    item_lines = [
+        "Description: Software Development Services",
+        "Item Code: DEV-001",
+    ]
+    money_lines = [
+        "Unit: Service",
+        "Unit Price: 450000",
+        "Line Total: 450000",
+        "Subtotal: 450,000",
+        "Tax: 81,000",
+        "Total: 531,000",
+        "Currency: PKR",
+    ]
     invoice_lines = [
         "ABC Pvt Ltd",
         "Invoice No: INV-1827",
         "Date: 10-09-2026",
         "Bill To: Customer Co",
-        "Subtotal: 450,000",
-        "Tax: 81,000",
-        "Total: 531,000",
-        "Currency: PKR",
+        "PO Number: PO-7788",
+        "GRN Number: GRN-1001",
+        *item_lines,
+        "Quantity: 1",
+        *money_lines,
     ]
     po_lines = [
         "ABC Pvt Ltd",
         "Purchase Order",
         "PO Number: PO-7788",
         "PO Date: 01-09-2026",
-        "Subtotal: 450,000",
-        "Tax: 81,000",
-        "Total: 531,000",
-        "Currency: PKR",
+        *item_lines,
+        "Ordered Quantity: 1",
+        *money_lines,
+    ]
+    grn_lines = [
+        "GOODS RECEIPT NOTE",
+        "GRN Number: GRN-1001",
+        "GRN Date: September 5, 2026",
+        "Vendor: ABC Pvt Ltd",
+        "PO Number: PO-7788",
+        *item_lines,
+        "Ordered Quantity: 1",
+        "Received Quantity: 1",
+        *money_lines,
+        "Received By: Store Department",
+        "Receipt Status: Received",
     ]
 
     build_pdf(OUT / "sample_invoice.pdf", invoice_lines)
     build_pdf(OUT / "sample_purchase_order.pdf", po_lines)
+    build_pdf(OUT / "sample_goods_receipt.pdf", grn_lines)
     build_png(OUT / "sample_invoice.png", invoice_lines)
     build_png(OUT / "sample_purchase_order.png", po_lines)
 

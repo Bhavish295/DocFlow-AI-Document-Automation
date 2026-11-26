@@ -99,38 +99,40 @@ export default function AuditLogs() {
         </div>
       ) : (
         <>
-          <table className="entity-list__table">
-            <thead>
-              <tr>
-                <th>When</th>
-                <th>Action</th>
-                <th>Resource</th>
-                <th>Resource ID</th>
-                <th>User</th>
-                <th>Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((row) => (
-                <tr key={row.id}>
-                  <td>{formatDate(row.created_at)}</td>
-                  <td>{row.action}</td>
-                  <td>{row.resource_type || '—'}</td>
-                  <td>
-                    <code className="entity-list__code">
-                      {row.resource_id ? String(row.resource_id).slice(0, 12) : '—'}
-                    </code>
-                  </td>
-                  <td>
-                    <code className="entity-list__code">
-                      {row.user_id ? String(row.user_id).slice(0, 8) : '—'}
-                    </code>
-                  </td>
-                  <td className="entity-list__details">{row.details || '—'}</td>
+          <div className="entity-list__table-wrap">
+            <table className="entity-list__table">
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Action</th>
+                  <th>Resource</th>
+                  <th>Resource ID</th>
+                  <th>User</th>
+                  <th>Details</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((row) => (
+                  <tr key={row.id}>
+                    <td className="entity-list__cell-muted">{formatDate(row.created_at)}</td>
+                    <td className="entity-list__action-name">{row.action}</td>
+                    <td>{row.resource_type || '—'}</td>
+                    <td>
+                      <code className="entity-list__code">
+                        {row.resource_id ? String(row.resource_id).slice(0, 12) : '—'}
+                      </code>
+                    </td>
+                    <td>
+                      <code className="entity-list__code">
+                        {row.user_id ? String(row.user_id).slice(0, 8) : '—'}
+                      </code>
+                    </td>
+                    <td className="entity-list__details">{row.details || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <div className="entity-list__pager">
             <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
               Previous

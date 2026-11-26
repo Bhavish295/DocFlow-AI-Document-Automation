@@ -129,21 +129,24 @@ other = [
 ]
 
 goods_receipt = [
-    "GOODS RECEIPT NOTE GRN Number GRN-501 Received Date 12 March 2026 Supplier Demo Parts PO Number PO-1007 Quantity Received 20",
-    "Goods Receipt GRN No GRN-880 Vendor Office Essentials Purchase Order PO-4412 Quantity Received 5 Received Date 01 April 2026",
-    "GRN Number GRN-2201 Goods Receipt Note Supplier Demo Hardware PO Number PO-9001 Qty Received 12 Date Received 18 Feb 2026",
-    "Goods Receipt Note Receipt No GRN-334 PO Number PO-7788 Supplier Warehouse Demo Quantity Received 100 Received Date 05 May 2026",
-    "GRN GRN-9912 Goods Receipt Vendor Demo Soft Purchase Order Number PO-331 Quantity Received 3 Received Date 09 June 2026",
-    "Goods Receipt Note GRN Number GRN-1414 Supplier Demo Paper Co PO Number PO-2201 Quantity Received 500 Date Received 22 July 2026",
-    "GRN No. GRN-6060 Goods Receipt Purchase Order PO-8840 Vendor Demo Tools Quantity Received 7 Received Date 11 Aug 2026",
-    "Goods Receipt GRN-7171 Supplier Demo Med Supply PO Number PO-1009 Quantity Received 15 Received Date 30 Jan 2026",
-    "GRN Number GRN-3030 Goods Receipt Note Vendor Demo Apparel Purchase Order PO-5566 Qty Received 30 Date Received 14 Sep 2026",
-    "Goods Receipt Note GRN No GRN-4545 PO Number PO-670 Supplier Demo Freight Quantity Received 40 Received Date 03 Oct 2026",
-    "GRN GRN-1212 Goods Receipt Supplier North Supplies PO Number PO-909 Quantity Received 9 Received Date 19 Nov 2026",
-    "Goods Receipt Note Receipt Number GRN-8383 Vendor Demo Parts PO Number PO-4141 Quantity Received 1 Date Received 08 Dec 2026",
-    "GRN Number GRN-5757 Goods Receipt Purchase Order PO-3030 Supplier Demo Catalog Quantity Received 25 Received Date 27 Mar 2026",
-    "Goods Receipt GRN-2929 Vendor Lab Demo PO Number PO-1717 Quantity Received 60 Received Date 16 Apr 2026",
-    "GRN No GRN-8686 Goods Receipt Note Supplier Depot Demo Purchase Order PO-2626 Quantity Received 18 Received Date 21 May 2026",
+    "GOODS RECEIPT NOTE GRN Number GRN-501 Received Date 12 March 2026 Supplier Demo Parts PO Number PO-1007 Quantity Received 20 Received By Store Department Receipt Status Received",
+    "Goods Receipt GRN No GRN-880 Vendor Office Essentials Purchase Order PO-4412 Received Quantity 5 Received Date 01 April 2026 Received By Warehouse Receipt Status Complete",
+    "GRN Number GRN-2201 Goods Receipt Note Supplier Demo Hardware PO Number PO-9001 Qty Received 12 Date Received 18 Feb 2026 Received By Receiving Dock",
+    "Goods Receipt Note Receipt No GRN-334 PO Number PO-7788 Supplier Warehouse Demo Quantity Received 100 Received Date 05 May 2026 Received By Store Department Receipt Status Received",
+    "GRN GRN-9912 Goods Receipt Vendor Demo Soft Purchase Order Number PO-331 Received Quantity 3 Received Date 09 June 2026 Goods Received Received By Ops",
+    "Goods Receipt Note GRN Number GRN-1414 Supplier Demo Paper Co PO Number PO-2201 Quantity Received 500 Date Received 22 July 2026 Receipt Status Received Received By Mail Room",
+    "GRN No. GRN-6060 Goods Receipt Purchase Order PO-8840 Vendor Demo Tools Received Quantity 7 Received Date 11 Aug 2026 Received Items verified Received By Workshop",
+    "Goods Receipt GRN-7171 Supplier Demo Med Supply PO Number PO-1009 Quantity Received 15 Received Date 30 Jan 2026 Received By Clinic Store Receipt Status Received",
+    "GRN Number GRN-3030 Goods Receipt Note Vendor Demo Apparel Purchase Order PO-5566 Qty Received 30 Date Received 14 Sep 2026 Received By Event Desk",
+    "Goods Receipt Note GRN No GRN-4545 PO Number PO-670 Supplier Demo Freight Quantity Received 40 Received Date 03 Oct 2026 Goods Received Receipt Status Complete",
+    "GRN GRN-1212 Goods Receipt Supplier North Supplies PO Number PO-909 Received Quantity 9 Received Date 19 Nov 2026 Received By Store Department",
+    "Goods Receipt Note Receipt Number GRN-8383 Vendor Demo Parts PO Number PO-4141 Quantity Received 1 Date Received 08 Dec 2026 Received By Warehouse Receipt Status Received",
+    "GRN Number GRN-5757 Goods Receipt Purchase Order Reference PO-3030 Supplier Demo Catalog Received Quantity 25 Received Date 27 Mar 2026 Received Items counted",
+    "Goods Receipt GRN-2929 Vendor Lab Demo PO Number PO-1717 Quantity Received 60 Received Date 16 Apr 2026 Received By Lab Store Receipt Status Received",
+    "GRN No GRN-8686 Goods Receipt Note Supplier Depot Demo Purchase Order PO-2626 Received Quantity 18 Received Date 21 May 2026 Received By Depot Clerk",
+    "GOODS RECEIPT NOTE GRN Number GRN-1001 GRN Date 05 September 2026 Vendor ABC Pvt Ltd PO Number PO-7788 Received Quantity 1 Ordered Quantity 1 Received By Store Department Receipt Status Received Unit Service",
+    "Goods Receipt Note GRN Number GRN-4420 Goods Received Vendor Metro Supplies Purchase Order Reference PO-2109 Received Quantity 14 Receipt Status Received Received By Receiving Bay",
+    "GRN Number GRN-7711 Goods Receipt Note PO Number PO-5530 Supplier Harbor Parts Qty Received 22 Received By Dock Team Receipt Status Complete Date Received 02 Aug 2026",
 ]
 
 
@@ -152,24 +155,27 @@ def main() -> None:
     for label, texts in [
         ("invoice", invoice[:15]),
         ("purchase_order", purchase_order[:15]),
-        ("goods_receipt", goods_receipt),
+        ("goods_receipt", goods_receipt[:18]),
         ("contract", contract[:15]),
         ("receipt", receipt[:15]),
         ("bank_statement", bank_statement[:15]),
-        ("other", other),
+        ("other", other[:15]),
     ]:
-        if len(texts) != 15:
+        if label == "goods_receipt":
+            if not 15 <= len(texts) <= 20:
+                raise SystemExit(f"{label} has {len(texts)} examples; expected 15-20")
+        elif len(texts) != 15:
             raise SystemExit(f"{label} has {len(texts)} examples")
         for text in texts:
             examples.append({"label": label, "text": text})
 
     payload = {
-        "version": "1.2.0",
+        "version": "1.3.0",
         "description": (
             "Expanded starter/demo labeled examples for local ML document classification "
-            "including goods_receipt. Synthetic text only; not production business data. "
-            "Evaluation metrics are measured on a local synthetic holdout split and are not "
-            "production accuracy."
+            "including stronger goods_receipt coverage. Synthetic text only; not production "
+            "business data. Evaluation metrics are measured on a local synthetic holdout "
+            "split and are not production accuracy."
         ),
         "labels": [
             "invoice",

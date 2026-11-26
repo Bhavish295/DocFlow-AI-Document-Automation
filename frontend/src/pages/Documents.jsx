@@ -196,8 +196,10 @@ export default function Documents() {
   const [relationshipsOpen, setRelationshipsOpen] = useState(false)
   const [relationshipsLoading, setRelationshipsLoading] = useState(false)
   const [relationshipsError, setRelationshipsError] = useState('')
+  const [relationshipsSuccess, setRelationshipsSuccess] = useState('')
   const [relationshipsDoc, setRelationshipsDoc] = useState(null)
   const [relationships, setRelationships] = useState([])
+  const [creatingRelationship, setCreatingRelationship] = useState(false)
   const [relationshipSuggestions, setRelationshipSuggestions] = useState([])
   const [confirmingRelationshipKey, setConfirmingRelationshipKey] = useState(null)
   const [deletingRelationshipId, setDeletingRelationshipId] = useState(null)
@@ -518,6 +520,7 @@ export default function Documents() {
     setRelationshipsOpen(true)
     setRelationshipsLoading(true)
     setRelationshipsError('')
+    setRelationshipsSuccess('')
     setRelationships([])
     setRelationshipSuggestions([])
     try {
@@ -533,6 +536,7 @@ export default function Documents() {
     const key = `${suggestion.relationship_type}:${suggestion.source_document_id}:${suggestion.target_document_id}`
     setConfirmingRelationshipKey(key)
     setRelationshipsError('')
+    setRelationshipsSuccess('')
     try {
       await createDocumentRelationship({
         source_document_id: suggestion.source_document_id,
@@ -543,6 +547,7 @@ export default function Documents() {
       if (relationshipsDoc) {
         await loadRelationshipsForDoc(relationshipsDoc)
       }
+      setRelationshipsSuccess('Relationship confirmed.')
       setSuccess('Relationship confirmed.')
     } catch (err) {
       setRelationshipsError(err.message || 'Could not confirm relationship.')
@@ -551,14 +556,35 @@ export default function Documents() {
     }
   }
 
+  const onCreateManualRelationship = async (payload) => {
+    setCreatingRelationship(true)
+    setRelationshipsError('')
+    setRelationshipsSuccess('')
+    try {
+      await createDocumentRelationship(payload)
+      if (relationshipsDoc) {
+        await loadRelationshipsForDoc(relationshipsDoc)
+      }
+      setRelationshipsSuccess('Relationship confirmed.')
+      setSuccess('Relationship confirmed.')
+    } catch (err) {
+      // Let the modal form surface the API error (including duplicate 409).
+      throw err
+    } finally {
+      setCreatingRelationship(false)
+    }
+  }
+
   const onDeleteRelationship = async (item) => {
     setDeletingRelationshipId(item.id)
     setRelationshipsError('')
+    setRelationshipsSuccess('')
     try {
       await deleteDocumentRelationship(item.id)
       if (relationshipsDoc) {
         await loadRelationshipsForDoc(relationshipsDoc)
       }
+      setRelationshipsSuccess('Relationship removed.')
     } catch (err) {
       setRelationshipsError(err.message || 'Could not remove relationship.')
     } finally {
@@ -1403,15 +1429,23 @@ export default function Documents() {
 
       <RelationshipsModal
         open={relationshipsOpen}
+        sourceDocument={relationshipsDoc}
         documentName={relationshipsDoc?.original_filename}
         relationships={relationships}
         suggestions={relationshipSuggestions}
         loading={relationshipsLoading}
         error={relationshipsError}
+        successMessage={relationshipsSuccess}
         confirmingKey={confirmingRelationshipKey}
+        creating={creatingRelationship}
         deletingId={deletingRelationshipId}
-        onClose={() => setRelationshipsOpen(false)}
+        canCreate={canManageRelationships}
+        onClose={() => {
+          setRelationshipsOpen(false)
+          setRelationshipsSuccess('')
+        }}
         onConfirmSuggestion={canManageRelationships ? onConfirmRelationshipSuggestion : undefined}
+        onCreateRelationship={canManageRelationships ? onCreateManualRelationship : undefined}
         onDelete={canManageRelationships ? onDeleteRelationship : undefined}
       />
 

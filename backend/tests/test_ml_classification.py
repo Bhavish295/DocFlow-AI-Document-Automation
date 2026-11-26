@@ -32,6 +32,8 @@ from tests.test_classification import (
 
     CONTRACT_TEXT,
 
+    GOODS_RECEIPT_WITH_PO_TEXT,
+
     INVOICE_TEXT,
 
     PURCHASE_ORDER_TEXT,
@@ -356,6 +358,52 @@ def test_rule_and_ml_disagreement_prefers_stronger_or_other():
 
 
 
+def test_hybrid_prefers_strong_goods_receipt_rule_over_weak_po_ml():
+    """Live GRN-vs-PO confusion: clear rule GRN must not become hybrid_uncertain/other."""
+    result = combine_rule_and_ml(
+        ClassificationResult(document_type="goods_receipt", confidence=0.61),
+        ClassificationResult(document_type="purchase_order", confidence=0.32),
+    )
+    assert result.models_disagreed is True
+    assert result.classification_method == "hybrid_prefer_stronger"
+    assert result.document_type == "goods_receipt"
+    assert result.rule_based_type == "goods_receipt"
+    assert result.ml_type == "purchase_order"
+    assert result.confidence == 0.5185  # 0.61 * 0.85
+
+
+def test_hybrid_keeps_uncertain_for_close_non_grn_disagreement():
+    result = combine_rule_and_ml(
+        ClassificationResult(document_type="contract", confidence=0.62),
+        ClassificationResult(document_type="other", confidence=0.55),
+    )
+    assert result.classification_method == "hybrid_uncertain"
+    assert result.document_type == "other"
+
+
+def test_hybrid_classifies_grn_with_po_reference_as_goods_receipt(tmp_path):
+    """End-to-end: rule GRN evidence wins even if ML weakly predicts purchase_order."""
+
+    class StubMl:
+        def is_available(self) -> bool:
+            return True
+
+        def predict(self, text: str) -> ClassificationResult:
+            return ClassificationResult(document_type="purchase_order", confidence=0.32)
+
+    hybrid = HybridDocumentClassifier(
+        rule_classifier=RuleBasedDocumentClassifier(),
+        ml_classifier=StubMl(),  # type: ignore[arg-type]
+    )
+    result = hybrid.classify_detailed(GOODS_RECEIPT_WITH_PO_TEXT)
+    assert result.document_type == "goods_receipt"
+    assert result.rule_based_type == "goods_receipt"
+    assert result.ml_type == "purchase_order"
+    assert result.classification_method == "hybrid_prefer_stronger"
+    assert result.confidence >= 0.50
+
+
+
 
 
 def test_classification_train_and_status_api(client, tmp_path, monkeypatch):
@@ -633,3 +681,20 @@ def test_disagreement_review_reason_is_allowed(client):
         db.close()
 
 
+
+
+def test_stale_model_is_retrained_on_load(tmp_path):
+    import joblib
+
+    from app.core.config import settings
+
+    classifier = _train_temp_classifier(tmp_path)
+    payload = joblib.load(classifier.model_path)
+    payload["metadata"]["model_version"] = "0.0.1-old"
+    joblib.dump(payload, classifier.model_path)
+
+    reloaded = TfidfLogisticDocumentClassifier(model_dir=tmp_path / "models")
+    assert reloaded.predict("Invoice No: INV-1 Total due 100") is not None
+    assert joblib.load(reloaded.model_path)["metadata"]["model_version"] == (
+        settings.CLASSIFICATION_MODEL_VERSION
+    )

@@ -58,6 +58,33 @@ Received Date: 12 March 2026
 Quantity Received: 20
 """
 
+GOODS_RECEIPT_WITH_PO_TEXT = """
+GOODS RECEIPT NOTE
+
+GRN Number: GRN-1001
+GRN Date: September 5, 2026
+
+Vendor: ABC Pvt Ltd
+PO Number: PO-7788
+Currency: PKR
+
+Item:
+Description: Software Development Services
+Item Code: DEV-001
+Ordered Quantity: 1
+Received Quantity: 1
+Unit: Service
+Unit Price: 450000
+Line Total: 450000
+
+Subtotal: 450000
+Tax: 81000
+Total: 531000
+
+Received By: Store Department
+Receipt Status: Received
+"""
+
 UNKNOWN_TEXT = """
 Weekly team notes
 Discussed roadmap priorities and staffing.
@@ -79,6 +106,12 @@ def test_classify_purchase_order():
 
 def test_classify_goods_receipt():
     result = RuleBasedDocumentClassifier().classify(GOODS_RECEIPT_TEXT)
+    assert result.document_type == "goods_receipt"
+    assert result.confidence >= 0.55
+
+
+def test_classify_goods_receipt_with_po_number_stays_goods_receipt():
+    result = RuleBasedDocumentClassifier().classify(GOODS_RECEIPT_WITH_PO_TEXT)
     assert result.document_type == "goods_receipt"
     assert result.confidence >= 0.55
 

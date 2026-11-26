@@ -206,4 +206,10 @@ class DocumentService:
         elif goods_receipt is not None:
             payload.vendor_id = goods_receipt.vendor_id
             payload.vendor_name = goods_receipt.vendor_name
+
+        from app.services.duplicate_detection import DuplicateDetectionService
+
+        payload.duplicate_count = DuplicateDetectionService(self.db).count_for_documents(
+            [document.id]
+        ).get(document.id, 0)
         return payload

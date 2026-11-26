@@ -9,9 +9,11 @@
 }
 
 .relationships-modal__panel {
-  width: min(760px, 100%);
-  max-height: min(90vh, 900px);
-  overflow: auto;
+  width: min(880px, 100%);
+  max-height: min(92vh, 920px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border-radius: calc(var(--radius) + 2px);
   background: var(--surface);
   border: 1px solid var(--line);
@@ -22,10 +24,9 @@
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.15rem 1.25rem 0.85rem;
+  padding: 1.2rem 1.35rem 0.95rem;
   border-bottom: 1px solid var(--line);
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   background: var(--surface);
 }
 
@@ -40,41 +41,68 @@
 
 .relationships-modal__header h2 {
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.4rem;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+.relationships-modal__subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.86rem;
+  color: var(--text-muted);
 }
 
 .relationships-modal__close {
-  border: 0;
-  background: transparent;
-  font-size: 1.5rem;
-  color: var(--text-muted);
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-elevated);
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--ink);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .relationships-modal__body {
   display: grid;
-  gap: 1.25rem;
-  padding: 1.15rem 1.25rem 1.35rem;
+  gap: 1.35rem;
+  padding: 1.2rem 1.35rem 1.4rem;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
 }
 
-.relationships-modal__body h3 {
-  margin: 0 0 0.65rem;
-  font-size: 0.95rem;
+.relationships-modal__section h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1rem;
 }
 
-.relationships-modal__note {
-  margin: 0;
-  font-size: 0.86rem;
+.relationships-modal__note,
+.relationships-modal__hint {
+  margin: 0 0 0.85rem;
+  font-size: 0.88rem;
   color: var(--text-muted);
+  line-height: 1.45;
 }
 
 .relationships-modal__state {
   margin: 0;
   color: var(--ink-soft);
+  line-height: 1.5;
 }
 
 .relationships-modal__state--error {
   color: #9b2c2c;
+}
+
+.relationships-modal__state--success {
+  color: #1f6a3a;
+  background: #e8f6ec;
+  border: 1px solid #b7d8c0;
+  border-radius: 9px;
+  padding: 0.65rem 0.8rem;
 }
 
 .relationships-modal__list {
@@ -88,7 +116,7 @@
 .relationships-modal__item {
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 0.9rem 1rem;
+  padding: 0.95rem 1.05rem;
   display: grid;
   gap: 0.75rem;
   background: color-mix(in srgb, var(--surface) 92%, var(--accent) 8%);
@@ -102,28 +130,39 @@
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
+  align-items: flex-start;
 }
 
 .relationships-modal__filename {
   margin: 0;
   font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.35;
 }
 
 .relationships-modal__type {
-  margin: 0.2rem 0 0;
+  margin: 0.25rem 0 0;
   font-size: 0.82rem;
   color: var(--text-muted);
 }
 
 .relationships-modal__status {
   align-self: start;
-  font-size: 0.75rem;
+  display: inline-flex;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--accent);
+  background: var(--accent-muted);
+  color: var(--accent-hover);
+  flex-shrink: 0;
 }
 
 .relationships-modal__status--suggested {
+  background: var(--warn-bg);
   color: #8a6a20;
 }
 
@@ -135,19 +174,54 @@
 }
 
 .relationships-modal__grid dt {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
+  font-weight: 650;
 }
 
 .relationships-modal__grid dd {
-  margin: 0.15rem 0 0;
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
-.relationships-modal__actions {
+.relationships-modal__actions,
+.relationships-modal__form-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.relationships-modal__section--form {
+  padding: 1rem 1.05rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(250, 252, 248, 0.92);
+}
+
+.relationships-modal__form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.relationships-modal__form label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--ink-soft);
+}
+
+.relationships-modal__form select {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  padding: 0.65rem 0.75rem;
+  background: #fff;
+  font: inherit;
+  color: var(--ink);
 }
 
 .relationships-modal__confirm,
@@ -155,15 +229,56 @@
   border: 1px solid var(--line);
   background: var(--surface);
   border-radius: calc(var(--radius) - 2px);
-  padding: 0.4rem 0.7rem;
+  padding: 0.5rem 0.85rem;
   cursor: pointer;
   font: inherit;
+  font-weight: 600;
 }
 
 .relationships-modal__confirm {
   background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  color: var(--accent-hover);
+  border-color: #b7d7c8;
+}
+
+.relationships-modal__confirm--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #f7fbf8;
+  padding: 0.65rem 1.1rem;
+}
+
+.relationships-modal__confirm--primary:disabled,
+.relationships-modal__confirm:disabled,
+.relationships-modal__danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .relationships-modal__danger {
   color: #9b2c2c;
+}
+
+@media (max-width: 640px) {
+  .relationships-modal {
+    padding: 0.5rem;
+    place-items: end center;
+  }
+
+  .relationships-modal__panel {
+    max-height: 94vh;
+    border-radius: 14px 14px 10px 10px;
+  }
+
+  .relationships-modal__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .relationships-modal__item-top {
+    flex-direction: column;
+  }
+
+  .relationships-modal__confirm--primary {
+    width: 100%;
+  }
 }

@@ -108,6 +108,24 @@ def test_investigation_agent_completed(client):
     assert types.issubset({"fact", "observation", "inference"})
 
 
+def test_investigation_agent_specific_invoice_attention(client):
+    _seed(client.testing_session_local)
+    db = client.testing_session_local()
+    try:
+        result = InvestigationAgent(db).investigate(
+            "Why does invoice INV-100 need attention?"
+        )
+    finally:
+        db.close()
+
+    assert result["status"] == "completed"
+    assert result["queries"]
+    assert any("INV-100" in (step.get("sql") or "") for step in result["queries"])
+    joined = " ".join(finding["description"] for finding in result["findings"])
+    assert "INV-100" in joined
+    assert "validation_mismatch" in joined or "review" in joined.lower()
+
+
 def test_investigation_agent_unsupported(client):
     db = client.testing_session_local()
     try:

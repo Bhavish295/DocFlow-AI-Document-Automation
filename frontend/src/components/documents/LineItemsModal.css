@@ -9,9 +9,11 @@
 }
 
 .line-items-modal__panel {
-  width: min(900px, 100%);
-  max-height: min(90vh, 900px);
-  overflow: auto;
+  width: min(980px, 100%);
+  max-height: min(92vh, 920px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border-radius: calc(var(--radius) + 2px);
   background: var(--surface);
   border: 1px solid var(--line);
@@ -22,10 +24,9 @@
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.15rem 1.25rem 0.85rem;
+  padding: 1.2rem 1.35rem 0.95rem;
   border-bottom: 1px solid var(--line);
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   background: var(--surface);
 }
 
@@ -40,24 +41,34 @@
 
 .line-items-modal__header h2 {
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.4rem;
+  overflow-wrap: anywhere;
 }
 
 .line-items-modal__close {
-  border: 0;
-  background: transparent;
-  font-size: 1.5rem;
-  color: var(--text-muted);
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-elevated);
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--ink);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .line-items-modal__body {
-  padding: 1.15rem 1.25rem 1.35rem;
+  padding: 1.2rem 1.35rem 1.4rem;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .line-items-modal__state {
   margin: 0;
   color: var(--ink-soft);
+  line-height: 1.5;
 }
 
 .line-items-modal__state--error {
@@ -66,6 +77,9 @@
 
 .line-items-modal__table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
 
 .line-items-modal__table {
@@ -76,10 +90,11 @@
 
 .line-items-modal__table th,
 .line-items-modal__table td {
-  padding: 0.65rem 0.7rem;
+  padding: 0.75rem 0.8rem;
   border-bottom: 1px solid var(--line);
   text-align: left;
-  font-size: 0.86rem;
+  font-size: 0.88rem;
+  vertical-align: top;
 }
 
 .line-items-modal__table th {
@@ -87,4 +102,29 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-muted);
+  background: rgba(231, 238, 232, 0.85);
+  position: sticky;
+  top: 0;
+}
+
+.line-items-modal__table td {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.line-items-modal__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+@media (max-width: 640px) {
+  .line-items-modal {
+    padding: 0.5rem;
+    place-items: end center;
+  }
+
+  .line-items-modal__panel {
+    max-height: 94vh;
+    border-radius: 14px 14px 10px 10px;
+  }
 }

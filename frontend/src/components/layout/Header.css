@@ -63,30 +63,41 @@
   gap: 0.75rem;
 }
 
+.app-header__logout {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper-elevated);
+  color: var(--ink);
+  padding: 0.4rem 0.7rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.app-header__logout:hover {
+  background: var(--panel);
+}
+
 .app-header__user {
   display: flex;
   align-items: center;
   gap: 0.65rem;
   font-size: 0.82rem;
+  min-width: 0;
 }
 
 .app-header__user strong {
   display: block;
   color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 12rem;
 }
 
 .app-header__user span {
   color: var(--ink-soft);
   text-transform: capitalize;
-}
-
-.app-header__logout {
-  border: 1px solid var(--line);
-  background: var(--paper-elevated);
-  color: var(--ink);
-  padding: 0.35rem 0.6rem;
-  font: inherit;
-  cursor: pointer;
 }
 
 .app-header__status {

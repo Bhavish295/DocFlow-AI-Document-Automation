@@ -90,9 +90,11 @@ class Settings(BaseSettings):
     DUPLICATE_SIMILARITY_THRESHOLD: float = 0.85
     DUPLICATE_BUSINESS_AMOUNT_TOLERANCE: float = 0.01
     DUPLICATE_MAX_SIMILARITY_CANDIDATES: int = 50
+    # Run duplicate detection automatically after each document is processed
+    DUPLICATE_AUTO_CHECK_ENABLED: bool = True
 
     CLASSIFICATION_MODEL_DIR: str = "storage/models"
-    CLASSIFICATION_MODEL_VERSION: str = "1.2.0"
+    CLASSIFICATION_MODEL_VERSION: str = "1.3.0"
     CLASSIFICATION_RANDOM_STATE: int = 42
 
     # --- Step 26 security / limits ---

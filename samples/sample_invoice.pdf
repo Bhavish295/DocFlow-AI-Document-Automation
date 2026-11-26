@@ -2,7 +2,7 @@
 1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj
 2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj
 3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources<< /Font<< /F1 5 0 R >> >> >>endobj
-4 0 obj<< /Length 258 >>stream
+4 0 obj<< /Length 536 >>stream
 BT
 /F1 12 Tf
 50 740 Td
@@ -13,6 +13,22 @@ BT
 (Date: 10-09-2026) Tj
 0 -18 Td
 (Bill To: Customer Co) Tj
+0 -18 Td
+(PO Number: PO-7788) Tj
+0 -18 Td
+(GRN Number: GRN-1001) Tj
+0 -18 Td
+(Description: Software Development Services) Tj
+0 -18 Td
+(Item Code: DEV-001) Tj
+0 -18 Td
+(Quantity: 1) Tj
+0 -18 Td
+(Unit: Service) Tj
+0 -18 Td
+(Unit Price: 450000) Tj
+0 -18 Td
+(Line Total: 450000) Tj
 0 -18 Td
 (Subtotal: 450,000) Tj
 0 -18 Td
@@ -32,8 +48,8 @@ xref
 0000000056 00000 n 
 0000000111 00000 n 
 0000000233 00000 n 
-0000000540 00000 n 
+0000000818 00000 n 
 trailer<< /Size 6 /Root 1 0 R >>
 startxref
-608
+886
 %%EOF

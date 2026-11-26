@@ -9,7 +9,10 @@
 }
 
 .classification-modal__panel {
-  width: min(560px, 100%);
+  width: min(640px, 100%);
+  max-height: min(90vh, 820px);
+  display: flex;
+  flex-direction: column;
   border-radius: 14px;
   border: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(250, 252, 248, 0.98), rgba(238, 244, 239, 0.96));
@@ -22,8 +25,9 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.1rem 1.2rem 0.85rem;
+  padding: 1.15rem 1.25rem 0.95rem;
   border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
 }
 
 .classification-modal__eyebrow {
@@ -37,7 +41,7 @@
 
 .classification-modal__header h2 {
   font-family: var(--font-display);
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   word-break: break-word;
 }
 
@@ -50,44 +54,50 @@
   color: var(--ink);
   font-size: 1.4rem;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .classification-modal__body {
-  padding: 1rem 1.2rem 1.25rem;
+  padding: 1.15rem 1.25rem 1.35rem;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .classification-modal__grid {
   margin: 0;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.8rem;
 }
 
 .classification-modal__grid div {
-  padding: 0.75rem 0.8rem;
+  padding: 0.8rem 0.85rem;
   border-radius: 10px;
   border: 1px solid var(--line);
   background: rgba(247, 250, 246, 0.9);
 }
 
 .classification-modal__grid dt {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .classification-modal__grid dd {
-  margin: 0.35rem 0 0;
-  font-size: 0.95rem;
+  margin: 0.4rem 0 0;
+  font-size: 0.98rem;
   font-weight: 600;
   text-transform: capitalize;
+  overflow-wrap: anywhere;
 }
 
 .classification-modal__state {
   margin: 0;
   text-align: center;
   color: var(--text-muted);
+  line-height: 1.5;
 }
 
 .classification-modal__state--error {

@@ -139,40 +139,56 @@ export default function PurchaseOrders() {
         </div>
       ) : (
         <>
-          <table className="entity-list__table">
-            <thead>
-              <tr>
-                <th>File</th>
-                <th>Status</th>
-                <th>Vendor</th>
-                <th>Extracted</th>
-                <th>Review</th>
-                <th>Uploaded</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((doc) => (
-                <tr key={doc.id}>
-                  <td>{doc.original_filename}</td>
-                  <td>{statusLabel(doc.status)}</td>
-                  <td>{doc.vendor_name || '—'}</td>
-                  <td>{doc.has_purchase_order ? 'Yes' : 'No'}</td>
-                  <td>{doc.requires_review ? 'Yes' : 'No'}</td>
-                  <td>{formatDate(doc.uploaded_at)}</td>
-                  <td>
-                    <button
-                      type="button"
-                      onClick={() => openPo(doc)}
-                      disabled={!doc.has_purchase_order}
-                    >
-                      View data
-                    </button>
-                  </td>
+          <div className="entity-list__table-wrap">
+            <table className="entity-list__table">
+              <thead>
+                <tr>
+                  <th>File</th>
+                  <th>Status</th>
+                  <th>Vendor</th>
+                  <th>Extracted</th>
+                  <th>Review</th>
+                  <th>Uploaded</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((doc) => (
+                  <tr key={doc.id}>
+                    <td>
+                      <span className="entity-list__filename">{doc.original_filename}</span>
+                    </td>
+                    <td>
+                      <span className={`status-badge status-badge--${doc.status || 'uploaded'}`}>
+                        {statusLabel(doc.status)}
+                      </span>
+                    </td>
+                    <td>{doc.vendor_name || '—'}</td>
+                    <td>{doc.has_purchase_order ? 'Yes' : 'No'}</td>
+                    <td>
+                      {doc.requires_review ? (
+                        <span className="status-badge status-badge--needs_review">Review required</span>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td className="entity-list__cell-muted">{formatDate(doc.uploaded_at)}</td>
+                    <td>
+                      <div className="entity-list__actions">
+                        <button
+                          type="button"
+                          onClick={() => openPo(doc)}
+                          disabled={!doc.has_purchase_order}
+                        >
+                          View data
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <div className="entity-list__pager">
             <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
               Previous

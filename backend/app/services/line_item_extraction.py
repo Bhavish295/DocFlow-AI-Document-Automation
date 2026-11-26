@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
+from difflib import SequenceMatcher
 import re
 from typing import Protocol
 
@@ -27,6 +28,36 @@ SKIP_LINE = re.compile(
     re.IGNORECASE,
 )
 SEPARATOR_ONLY = re.compile(r"^[\s|_\-=.]+$")
+# Page markers inserted by text extraction, e.g. "--- Page 1 ---".
+PAGE_MARKER = re.compile(r"^[\s\-=_*]*page\s*\d*[\s\-=_*]*$", re.IGNORECASE)
+# "Label: value" metadata lines (not table rows). Tables use pipes/tabs/wide gaps.
+KEY_VALUE_LINE = re.compile(r"^(?P<label>[A-Za-z][A-Za-z0-9 .#/()_\-]{0,40}?)\s*:\s*(?P<value>.*)$")
+# Labels that describe a single item in "Key: Value" layouts.
+KV_DESCRIPTION_LABELS = {"description", "item description", "item", "item name", "product", "service"}
+KV_CODE_LABELS = {"item code", "sku", "code", "product code", "part number", "part no"}
+KV_UNIT_LABELS = {"unit", "uom", "unit of measure"}
+KV_UNIT_PRICE_LABELS = {"unit price", "rate", "price"}
+KV_LINE_TOTAL_LABELS = {"line total", "amount", "line amount"}
+KV_QUANTITY_LABELS = {
+    "quantity": "generic",
+    "qty": "generic",
+    "ordered quantity": "ordered",
+    "ordered qty": "ordered",
+    "received quantity": "received",
+    "received qty": "received",
+    "quantity received": "received",
+    "invoiced quantity": "invoiced",
+    "invoiced qty": "invoiced",
+    "billed quantity": "invoiced",
+}
+KV_ITEM_LABELS = (
+    KV_DESCRIPTION_LABELS
+    | KV_CODE_LABELS
+    | KV_UNIT_LABELS
+    | KV_UNIT_PRICE_LABELS
+    | KV_LINE_TOTAL_LABELS
+    | set(KV_QUANTITY_LABELS)
+)
 # Codes like SKU-1, SKU-A, ABC123 — letter present plus digit and/or separator.
 SKU_TOKEN = re.compile(
     r"^(?=[A-Z0-9\-_/]*[A-Z])(?=.*[\d\-_\/])[A-Z0-9][A-Z0-9\-_/]{0,31}$",
@@ -182,6 +213,98 @@ def _build_item(cells: list[str], line_number: int, quantity_type: str | None) -
     )
 
 
+def _match_item_label_loose(line: str) -> tuple[str, str] | None:
+    """Match an item label even when OCR dropped/mangled the colon ("Line Tota 450000").
+
+    Short labels (qty, sku, unit, ...) must match exactly; longer ones may differ slightly.
+    """
+    words = line.split()
+    # A table header such as "Item  Description  Qty  Price" is not a key/value line.
+    if HEADER_HINT.search(" ".join(words[1:])) and not re.search(r"\d", line):
+        return None
+    best: tuple[float, str, str] | None = None
+    for label in KV_ITEM_LABELS:
+        size = len(label.split())
+        if len(words) <= size:
+            continue
+        head = " ".join(words[:size]).lower().rstrip(":.;,")
+        value = " ".join(words[size:]).lstrip(":.;, ").strip()
+        if not value:
+            continue
+        if head == label:
+            score = 1.0
+        elif len(label) >= 5:
+            score = SequenceMatcher(None, head, label).ratio()
+            if score < 0.85:
+                continue
+        else:
+            continue
+        if best is None or score > best[0] or (score == best[0] and len(label) > len(best[1])):
+            best = (score, label, value)
+    return (best[1], best[2]) if best else None
+
+
+def _parse_key_value(line: str) -> tuple[str, str] | None:
+    if "|" in line or "\t" in line:
+        return None
+    match = KEY_VALUE_LINE.match(line)
+    if match:
+        label = re.sub(r"\s+", " ", match.group("label")).strip().lower()
+        return label, match.group("value").strip()
+    return _match_item_label_loose(line)
+
+
+def _build_kv_item(
+    fields: dict[str, str],
+    line_number: int,
+    quantity_type: str | None,
+) -> ExtractedLineItem | None:
+    """Build one item from a "Key: Value" block (e.g. Description / Item Code / Received Quantity)."""
+    description = next((fields[k] for k in KV_DESCRIPTION_LABELS if fields.get(k)), None)
+    item_code = next((fields[k] for k in KV_CODE_LABELS if fields.get(k)), None)
+    unit = next((fields[k] for k in KV_UNIT_LABELS if fields.get(k)), None)
+
+    def number(labels: set[str]) -> tuple[Decimal | None, str | None]:
+        for label in labels:
+            if fields.get(label):
+                value, currency = _parse_number(fields[label])
+                if value is not None:
+                    return value, currency
+        return None, None
+
+    # Prefer the quantity that matches this document type, then any generic quantity.
+    quantity: Decimal | None = None
+    preferred = [label for label, kind in KV_QUANTITY_LABELS.items() if kind == quantity_type]
+    generic = [label for label, kind in KV_QUANTITY_LABELS.items() if kind == "generic"]
+    others = [label for label in KV_QUANTITY_LABELS if label not in preferred and label not in generic]
+    for label in preferred + generic + others:
+        if fields.get(label):
+            value, _ = _parse_number(fields[label])
+            if value is not None:
+                quantity = value
+                break
+
+    unit_price, price_currency = number(KV_UNIT_PRICE_LABELS)
+    line_total, total_currency = number(KV_LINE_TOTAL_LABELS)
+
+    if description is None and item_code is None:
+        return None
+    if quantity is not None and quantity < 0:
+        return None
+
+    return ExtractedLineItem(
+        line_number=line_number,
+        description=description,
+        item_code=item_code,
+        quantity=quantity,
+        quantity_type=quantity_type,
+        unit=unit,
+        unit_price=unit_price if unit_price is None or unit_price >= 0 else None,
+        line_total=line_total if line_total is None or line_total >= 0 else None,
+        currency=total_currency or price_currency,
+    )
+
+
 class RuleBasedLineItemExtractor:
     def extract(self, text: str, *, document_type: str) -> list[ExtractedLineItem]:
         if document_type not in {
@@ -195,10 +318,34 @@ class RuleBasedLineItemExtractor:
         lines = [line.strip() for line in (text or "").replace("\r\n", "\n").split("\n")]
         items: list[ExtractedLineItem] = []
         line_number = 0
+        kv_fields: dict[str, str] = {}
+
+        def flush_kv() -> None:
+            nonlocal line_number
+            if kv_fields:
+                item = _build_kv_item(kv_fields, line_number + 1, quantity_type)
+                if item is not None:
+                    line_number += 1
+                    items.append(item)
+                kv_fields.clear()
 
         for raw in lines:
-            if not raw or SEPARATOR_ONLY.match(raw):
+            if not raw or SEPARATOR_ONLY.match(raw) or PAGE_MARKER.match(raw):
                 continue
+            key_value = _parse_key_value(raw)
+            if key_value is not None:
+                label, value = key_value
+                if label in KV_ITEM_LABELS:
+                    # A repeated field means the next item's block has started.
+                    if value and label in kv_fields:
+                        flush_kv()
+                    if value:
+                        kv_fields[label] = value
+                else:
+                    # Any other "Label: value" line is document metadata, never a table row.
+                    flush_kv()
+                continue
+            flush_kv()
             if SKIP_LINE.search(raw):
                 continue
             cells = _split_cells(raw)
@@ -215,6 +362,7 @@ class RuleBasedLineItemExtractor:
                 continue
             items.append(item)
 
+        flush_kv()
         return items
 
 

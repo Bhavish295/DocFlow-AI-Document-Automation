@@ -6,6 +6,7 @@ from collections import Counter
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 import json
+import logging
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -27,6 +28,8 @@ from app.core.config import BACKEND_ROOT, settings
 from app.core.exceptions import AppError
 from app.models.document import DocumentType
 from app.services.classification import ClassificationResult
+
+logger = logging.getLogger(__name__)
 
 
 SUPPORTED_LABELS = tuple(item.value for item in DocumentType)
@@ -386,7 +389,24 @@ class TfidfLogisticDocumentClassifier:
         payload = joblib.load(self.model_path)
         self._pipeline = payload["pipeline"]
         self._metadata = dict(payload.get("metadata") or {})
+        if self.is_stale(self._metadata):
+            # Model was trained for an older training set / version: retrain from the
+            # bundled starter set so predictions match the current code.
+            logger.warning(
+                "Classification model version %s does not match configured %s; retraining.",
+                self._metadata.get("model_version"),
+                settings.CLASSIFICATION_MODEL_VERSION,
+            )
+            try:
+                self.train()
+            except Exception:
+                logger.exception("Automatic classifier retrain failed; using existing model.")
         return self._pipeline
+
+    @staticmethod
+    def is_stale(metadata: dict[str, Any]) -> bool:
+        version = metadata.get("model_version")
+        return bool(version) and str(version) != settings.CLASSIFICATION_MODEL_VERSION
 
     def _save(self, pipeline: Pipeline, metadata: dict[str, Any]) -> Path:
         self.model_dir.mkdir(parents=True, exist_ok=True)

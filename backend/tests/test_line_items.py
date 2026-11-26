@@ -69,6 +69,48 @@ SKU-A | Good Item | 2
     assert items[0].quantity == Decimal("2")
 
 
+def test_page_markers_and_metadata_lines_are_not_items():
+    extractor = RuleBasedLineItemExtractor()
+    text = """--- Page 1 ---
+ABC Pvt Ltd
+Invoice No: INV-1827
+Date: 10-09-2026
+GRN Date: September 5, 2026
+Subtotal: 450,000
+Total: 531,000
+"""
+    assert extractor.extract(text, document_type="invoice") == []
+
+
+def test_key_value_item_block():
+    extractor = RuleBasedLineItemExtractor()
+    text = """--- Page 1 ---
+GRN Number: GRN-1001
+GRN Date: September 5, 2026
+Item:
+Description: Software Development Services
+Item Code: DEV-001
+Ordered Quantity: 4
+Received Quantity: 3
+Unit: Service
+Unit Price: 450000
+Line Total: 1350000
+Subtotal: 1350000
+Description: Support Hours
+Received Quantity: 2
+"""
+    items = extractor.extract(text, document_type="goods_receipt")
+    assert [item.description for item in items] == ["Software Development Services", "Support Hours"]
+    first = items[0]
+    assert first.item_code == "DEV-001"
+    assert first.quantity == Decimal("3")  # received quantity preferred for a GRN
+    assert first.quantity_type == "received"
+    assert first.unit == "Service"
+    assert first.unit_price == Decimal("450000")
+    assert first.line_total == Decimal("1350000")
+    assert items[1].quantity == Decimal("2")
+
+
 def test_line_item_api_and_replace(client, monkeypatch):
     import io
 
@@ -128,3 +170,34 @@ def test_quantity_matching_rules():
     )
     status3, *_ = summarize_quantity_evidence(ambiguous)
     assert status3 == "needs_review"
+
+
+def test_key_value_block_tolerates_ocr_noise():
+    extractor = RuleBasedLineItemExtractor()
+    text = """Invoice No INV-1827
+GRN Number. GRN-1001
+Description: Software Development Services
+Item Code: DEV-001
+Quantity: 1
+Unit Service
+Unit Price: 450000
+Line Tota 450000
+Subtotal 450,000
+Total: 531,000
+"""
+    items = extractor.extract(text, document_type="invoice")
+    assert len(items) == 1
+    assert items[0].description == "Software Development Services"
+    assert items[0].unit == "Service"
+    assert items[0].line_total == Decimal("450000")
+
+
+def test_whitespace_table_header_is_not_key_value():
+    extractor = RuleBasedLineItemExtractor()
+    text = """Item  Description  Qty  Unit Price  Total
+SKU-1  Laptop Stand  10  100.00  1000.00
+"""
+    items = extractor.extract(text, document_type="invoice")
+    assert len(items) == 1
+    assert items[0].item_code == "SKU-1"
+    assert items[0].quantity == Decimal("10")

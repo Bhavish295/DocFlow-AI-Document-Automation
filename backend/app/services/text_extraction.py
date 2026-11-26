@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import shutil
 
-from PIL import Image
+from PIL import Image, ImageOps
 from pypdf import PdfReader
 import pypdfium2 as pdfium
 import pytesseract
@@ -45,10 +45,30 @@ def clean_text(value: str) -> str:
     return cleaned
 
 
+OCR_MIN_WIDTH = 1800
+OCR_MAX_UPSCALE = 3.0
+
+
+def preprocess_for_ocr(image: Image.Image) -> Image.Image:
+    """Grayscale + contrast stretch + upscale small images.
+
+    Tesseract misreads small, low-resolution text (e.g. 900px-wide screenshots), so
+    images narrower than OCR_MIN_WIDTH are enlarged before recognition.
+    """
+    gray = ImageOps.autocontrast(ImageOps.grayscale(image))
+    if 0 < gray.width < OCR_MIN_WIDTH:
+        scale = min(OCR_MAX_UPSCALE, OCR_MIN_WIDTH / gray.width)
+        gray = gray.resize(
+            (round(gray.width * scale), round(gray.height * scale)),
+            Image.LANCZOS,
+        )
+    return gray
+
+
 def ocr_image(image: Image.Image) -> str:
     configure_tesseract()
     try:
-        raw = pytesseract.image_to_string(image, lang=settings.OCR_LANGUAGE)
+        raw = pytesseract.image_to_string(preprocess_for_ocr(image), lang=settings.OCR_LANGUAGE)
     except pytesseract.TesseractNotFoundError as exc:
         raise TextExtractionError(
             "Tesseract OCR is not installed or TESSERACT_CMD is not configured correctly."

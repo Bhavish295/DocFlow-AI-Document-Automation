@@ -150,3 +150,36 @@ def test_process_nonexistent_document_returns_404(client):
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Document not found."
+
+
+def test_processing_flags_exact_duplicate_automatically(client, monkeypatch):
+    content = b"%PDF-1.4 identical invoice bytes"
+    first = _upload_pdf(client, "invoice-a.pdf", content).json()
+    second = _upload_pdf(client, "invoice-a-copy.pdf", content).json()
+
+    monkeypatch.setattr(
+        "app.services.text_extraction.extract_selectable_pdf_text",
+        lambda _path: "Invoice number 1001\nTotal due: 250.00\nCustomer: Acme Corp",
+    )
+
+    assert client.post(f"/api/v1/documents/{first['id']}/process").status_code == 200
+    assert client.post(f"/api/v1/documents/{second['id']}/process").status_code == 200
+
+    duplicates = client.get(f"/api/v1/duplicates/{second['id']}").json()
+    exact = [item for item in duplicates["items"] if item["detection_type"] == "exact_duplicate"]
+    assert exact, duplicates
+    assert first["id"] in {exact[0]["source_document_id"], exact[0]["duplicate_document_id"]}
+    # Document API exposes the count so the UI can show the "Possible Duplicate" badge.
+    assert client.get(f"/api/v1/documents/{second['id']}").json()["duplicate_count"] >= 1
+
+
+def test_ocr_preprocessing_upscales_small_images():
+    from app.services.text_extraction import OCR_MIN_WIDTH, preprocess_for_ocr
+
+    small = Image.new("RGB", (900, 460), color=(255, 255, 255))
+    prepared = preprocess_for_ocr(small)
+    assert prepared.mode == "L"
+    assert prepared.width >= OCR_MIN_WIDTH
+
+    large = Image.new("RGB", (2400, 1200), color=(255, 255, 255))
+    assert preprocess_for_ocr(large).width == 2400

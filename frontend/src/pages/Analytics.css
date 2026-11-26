@@ -77,21 +77,26 @@
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--surface);
-  padding: 0.95rem 1rem;
+  padding: 1.05rem 1.1rem;
 }
 
 .analytics-page__cards h3,
 .analytics-page__panel h3 {
-  margin: 0 0 0.45rem;
-  font-size: 0.86rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--text-muted);
   font-weight: 650;
 }
 
 .analytics-page__cards p {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 650;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
 }
 
 .analytics-page__panel-head {
@@ -142,10 +147,19 @@
 .analytics-page__table-wrap th,
 .analytics-page__table-wrap td {
   text-align: left;
-  padding: 0.6rem 0.45rem;
+  padding: 0.75rem 0.7rem;
   border-bottom: 1px solid var(--line);
   vertical-align: top;
   font-size: 0.9rem;
+}
+
+.analytics-page__table-wrap th {
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(231, 238, 232, 0.75);
+  font-weight: 650;
 }
 
 .analytics-page__muted {

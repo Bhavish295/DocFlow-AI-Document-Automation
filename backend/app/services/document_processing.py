@@ -126,6 +126,11 @@ class DocumentProcessingService:
             RagIndexingService(self.db).safe_index_document(document.id)
             self.db.refresh(document)
 
+            from app.services.duplicate_detection import DuplicateDetectionService
+
+            DuplicateDetectionService(self.db).safe_check_document(document.id)
+            self.db.refresh(document)
+
             from app.services.workflow_engine import safe_dispatch_workflow_event
 
             safe_dispatch_workflow_event(
